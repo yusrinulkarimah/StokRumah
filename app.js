@@ -131,7 +131,7 @@ $('#plusBtn').onclick=()=>{const active=document.querySelector('.screen.active')
 $('#saveShoppingBtn').onclick=saveAllShopping;
 $('#todayText').textContent=new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 go('home');
-document.body.classList.remove('booting');if('serviceWorker' in navigator){
+if('serviceWorker' in navigator){
   addEventListener('load',async()=>{
     try{
       const reg=await navigator.serviceWorker.register('./service-worker.js?v=232');
@@ -139,5 +139,3 @@ document.body.classList.remove('booting');if('serviceWorker' in navigator){
     }catch(e){ console.warn('SW register failed',e); }
   });
 }
-
-setTimeout(()=>document.body.classList.remove('booting'),500);
