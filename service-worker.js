@@ -1,5 +1,5 @@
-const CACHE='stok-rumah-v2.3.2';
-const CORE=['./manifest.json','./icon.svg','./app.js?v=2.3.2'];
+const CACHE='stok-rumah-v2.4';
+const CORE=['./manifest.json','./icon.svg','./app.js?v=2.4'];
 self.addEventListener('install',event=>{
   self.skipWaiting();
   event.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).catch(()=>{}));

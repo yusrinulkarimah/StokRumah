@@ -13,6 +13,7 @@ if(!data){
 }
 data.items=Array.isArray(data.items)?data.items:[];
 data.shopping=Array.isArray(data.shopping)?data.shopping:[];
+data.shopping.forEach(x=>{ if(typeof x.checked!=='boolean') x.checked=false; });
 data.shopHistory=Array.isArray(data.shopHistory)?data.shopHistory:[];
 data.stockHistory=Array.isArray(data.stockHistory)?data.stockHistory:[];
 data.items.forEach(x=>{ if(x.category==='Baby Kids')x.category='Baby'; });
@@ -23,12 +24,13 @@ const esc=(v='')=>String(v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'
 function status(x){return +x.qty<=0?'out':+x.qty<=+x.min?'low':'safe'} function badge(x){return status(x)==='safe'?'<span class="badge safe">Aman</span>':status(x)==='low'?'<span class="badge warn-b">Hampir Habis</span>':'<span class="badge danger-b">Habis</span>'}
 function fmt(v){return v?new Date(v+'T00:00:00').toLocaleDateString('id-ID'):'-'} function dayDiff(v){if(!v)return 99999;let d=new Date(v+'T00:00:00'),n=new Date();n.setHours(0,0,0,0);return Math.ceil((d-n)/86400000)}
 function paoLimit(x){if(!x.opened||!x.pao)return '';let d=new Date(x.opened+'T00:00:00');d.setMonth(d.getMonth()+parseInt(x.pao));return d.toISOString().slice(0,10)} function effExp(x){return [x.expiry,paoLimit(x)].filter(Boolean).sort()[0]||''}
-function syncShopping(){data.items.forEach(x=>{if(status(x)!=='safe'){let s=data.shopping.find(y=>y.stockId===x.id);if(!s)data.shopping.push({id:uid(),stockId:x.id,name:x.name,category:x.category,qty:1,unit:x.unit,priority:status(x)==='out'?'Tinggi':'Sedang',price:0,expiry:'',note:'',auto:true});else{s.name=x.name;s.category=x.category}}});save()}
+function syncShopping(){data.items.forEach(x=>{if(status(x)!=='safe'){let s=data.shopping.find(y=>y.stockId===x.id);if(!s)data.shopping.push({id:uid(),stockId:x.id,name:x.name,category:x.category,qty:1,unit:x.unit,priority:status(x)==='out'?'Tinggi':'Sedang',price:0,expiry:'',note:'',auto:true,checked:false});else{s.name=x.name;s.category=x.category}}});save()}
 function go(id){$$('.screen').forEach(x=>x.classList.toggle('active',x.id===id));function saveAllShopping(){
- if(!data.shopping.length)return alert('Daftar belanja kosong.');
- if(!confirm('Simpan semua belanja dan masukkan ke riwayat?'))return;
- const current=[...data.shopping];
- for(const x of current){
+ const bought=data.shopping.filter(x=>x.checked);
+ if(!bought.length)return alert('Centang barang yang sudah dibeli terlebih dahulu.');
+ if(!confirm(`Simpan ${bought.length} barang yang sudah dibeli?`))return;
+ const processedIds=[];
+ for(const x of bought){
    let st=data.items.find(i=>i.id===x.stockId)||data.items.find(i=>i.name.toLowerCase()===x.name.toLowerCase());
    if(st){
      let add=x.qty;
@@ -37,6 +39,7 @@ function go(id){$$('.screen').forEach(x=>x.classList.toggle('active',x.id===id))
        if(!c||c<=0)continue;
        add*=c;
      }
+     // Only current stock quantity changes. Minimum stock is intentionally untouched.
      st.qty=Number((st.qty+add).toFixed(3));
      if(x.expiry)st.expiry=x.expiry;
      data.stockHistory.push({id:uid(),name:st.name,type:'in',qty:add,unit:st.unit,date:new Date().toISOString()});
@@ -46,9 +49,10 @@ function go(id){$$('.screen').forEach(x=>x.classList.toggle('active',x.id===id))
      data.stockHistory.push({id:uid(),name:st.name,type:'in',qty:st.qty,unit:st.unit,date:new Date().toISOString()});
    }
    data.shopHistory.push({id:uid(),name:x.name,category:x.category,qty:x.qty,unit:x.unit,price:x.price||0,date:new Date().toISOString()});
+   processedIds.push(x.id);
  }
- data.shopping=[];
- save();render();alert('Belanja tersimpan dan riwayat diperbarui.');
+ data.shopping=data.shopping.filter(x=>!processedIds.includes(x.id));
+ save();render();alert('Belanja tersimpan. Stok dan riwayat belanja sudah diperbarui.');
 }
 $$('.nav').forEach(x=>x.classList.toggle('on',x.dataset.screen===id));$('#pageTitle').textContent={home:'Beranda',stock:'Stok',shop:'Belanja',history:'Riwayat',more:'Lainnya'}[id];$('#searchBtn').style.display=['stock','shop'].includes(id)?'grid':'none';$('#plusBtn').style.display=['stock','shop'].includes(id)?'grid':'none';$('#filterBtn').style.display=id==='stock'?'grid':'none';render()}
 function render(){syncShopping();renderHome();renderStockTabs();renderStock();renderShop();renderHistory()}
@@ -74,15 +78,13 @@ function renderStock(){
     <div class="cell">${paoCats.includes(x.category)&&x.pao?esc(x.pao):'–'}</div>
     <div class="cell">${st}</div>
     <div class="stock-actions">
-      <button class="mini-edit" data-editstock="${x.id}" title="Edit">✎</button>
       <button class="mini-edit" data-cartstock="${x.id}" title="Tambah ke belanja">🛒</button>
       <button class="mini-trash" data-delstock="${x.id}" title="Hapus">🗑</button>
     </div>
    </div>`;
  }).join(''):'<div class="empty">Belum ada barang.</div>';
  $$('[data-stock]').forEach(e=>e.onclick=()=>openStockDetail(+e.dataset.stock));
- $$('[data-editstock]').forEach(e=>e.onclick=()=>openStockForm(+e.dataset.editstock));
- $$('[data-cartstock]').forEach(e=>e.onclick=()=>addStockToShopping(+e.dataset.cartstock));
+ $$('[data-cartstock]').forEach(e=>e.onclick=ev=>{ev.stopPropagation();addStockToShopping(+e.dataset.cartstock)});
  $$('[data-delstock]').forEach(e=>e.onclick=ev=>{ev.stopPropagation();deleteStock(+e.dataset.delstock)});
 }
 function renderShop(){
@@ -91,9 +93,15 @@ function renderShop(){
  let so=$('#shopSort').value,p={Tinggi:0,Sedang:1,Rendah:2};
  a.sort((x,y)=>so==='name'?x.name.localeCompare(y.name):so==='category'?x.category.localeCompare(y.category):(p[x.priority]??9)-(p[y.priority]??9));
  $('#shopPending').textContent=`${a.length} item`;
- $('#shopTotal').textContent='Rp '+a.reduce((t,x)=>t+(Number(x.price)||0)*(Number(x.qty)||0),0).toLocaleString('id-ID');
- $('#shopList').innerHTML=a.length?a.map(x=>{let st=data.items.find(i=>i.id===x.stockId);return `<div class="row"><div class="row-main" data-shop="${x.id}"><b>${esc(x.name)}</b><small>${x.qty} ${x.unit} | ${x.category}${x.price?` | Rp ${Number(x.price).toLocaleString('id-ID')}`:''}${st?` | Stok ${st.qty}/${st.min} ${st.unit}`:''}${x.expiry?` | Exp ${fmt(x.expiry)}`:''}</small></div><div class="row-actions"><span>›</span><button class="trash" data-delshop="${x.id}">🗑️</button></div></div>`}).join(''):'<div class="empty">Daftar belanja kosong.</div>';
+ const checkedTotal=a.filter(x=>x.checked).reduce((t,x)=>t+(Number(x.price)||0)*(Number(x.qty)||0),0);
+ $('#shopTotal').textContent='Rp '+checkedTotal.toLocaleString('id-ID');
+ $('#shopList').innerHTML=a.length?a.map(x=>{let st=data.items.find(i=>i.id===x.stockId);return `<div class="row shop-row">
+   <input class="shop-check" type="checkbox" data-checkshop="${x.id}" ${x.checked?'checked':''} aria-label="Tandai sudah dibeli">
+   <div class="row-main" data-shop="${x.id}"><b>${esc(x.name)}</b><small>${x.qty} ${x.unit} | ${x.category}${x.price?` | Rp ${Number(x.price).toLocaleString('id-ID')}`:''}${st?` | Stok ${st.qty}/${st.min} ${st.unit}`:''}${x.expiry?` | Exp ${fmt(x.expiry)}`:''}</small></div>
+   <div class="row-actions"><span>›</span><button class="trash" data-delshop="${x.id}">🗑️</button></div>
+  </div>`}).join(''):'<div class="empty">Daftar belanja kosong.</div>';
  $$('[data-shop]').forEach(e=>e.onclick=()=>openShopEdit(+e.dataset.shop));
+ $$('[data-checkshop]').forEach(e=>e.onchange=ev=>{let x=data.shopping.find(i=>i.id===+e.dataset.checkshop);if(x){x.checked=e.checked;save();renderShop()}});
  $$('[data-delshop]').forEach(e=>e.onclick=ev=>{ev.stopPropagation();deleteShop(+e.dataset.delshop)});
 }
 function renderHistory(){let a=histMode==='shop'?data.shopHistory:data.stockHistory;$('#historyContent').innerHTML=a.length?a.slice().reverse().map(h=>histMode==='shop'?`<div class="hist-row"><div><b>${h.name}</b><small>${h.qty} ${h.unit} · ${h.category}${h.price?` · Rp ${Number(h.price).toLocaleString('id-ID')}`:''}</small></div><small>${new Date(h.date).toLocaleString('id-ID')}</small></div>`:`<div class="hist-row"><div><b>${h.name}</b><small class="${h.type==='in'?'in':'out'}">${h.type==='in'?'Stok Masuk':'Stok Keluar'} ${h.type==='in'?'+':'-'}${h.qty} ${h.unit}</small></div><small>${new Date(h.date).toLocaleString('id-ID')}</small></div>`).join(''):'<div class="empty">Belum ada riwayat.</div>'}
@@ -106,17 +114,24 @@ function deleteStock(id){let x=data.items.find(i=>i.id===id);if(confirm(`Hapus $
 function addStockToShopping(id){
  let x=data.items.find(i=>i.id===id);if(!x)return;
  let ex=data.shopping.find(s=>s.stockId===id);
- if(!ex)data.shopping.push({id:uid(),stockId:id,name:x.name,category:x.category,qty:1,unit:x.unit,price:0,priority:status(x)==='out'?'Tinggi':'Sedang',expiry:'',note:'',auto:false});
- save();render();
+ if(!ex){
+   data.shopping.push({id:uid(),stockId:id,name:x.name,category:x.category,qty:1,unit:x.unit,price:0,priority:status(x)==='out'?'Tinggi':'Sedang',expiry:'',note:'',auto:false,checked:false});
+   save();render();
+   alert(`${x.name} ditambahkan ke daftar belanja.`);
+ }else{
+   alert(`${x.name} sudah ada di daftar belanja.`);
+ }
 }
-function openShopEdit(id){let x=data.shopping.find(i=>i.id===id),st=data.items.find(i=>i.id===x.stockId);openOverlay(`<div class="sheet-head"><h2>Edit Belanja</h2><button class="close" onclick="closeOverlay()">✕</button></div><div class="form-grid"><div class="field"><label>Nama Barang</label><input id="sName" value="${x.name}"></div><div class="field"><label>Kategori</label><select id="sCat">${cats.map(v=>`<option ${v===x.category?'selected':''}>${v}</option>`).join('')}</select></div><div class="two"><div class="field"><label>Jumlah</label><input id="sQty" type="number" value="${x.qty}"></div><div class="field"><label>Satuan</label><select id="sUnit">${units.map(v=>`<option ${v===x.unit?'selected':''}>${v}</option>`).join('')}</select></div></div><div class="field"><label>Harga (opsional)</label><input id="sPrice" type="number" min="0" step="100" value="${x.price||''}" placeholder="Contoh: 25000"></div><div class="field"><label>Kedaluwarsa</label><input id="sExp" type="date" value="${x.expiry||''}"></div><div class="field"><label>Catatan</label><textarea id="sNote">${x.note||''}</textarea></div>${st&&st.unit!==x.unit?`<div class="field"><label>1 ${x.unit} = berapa ${st.unit}</label><input id="sConv" type="number" value="1"></div>`:''}</div><div class="actions"><button class="secondary" id="saveShop">Simpan Perubahan</button><button class="primary" id="bought">Tandai Sudah Dibeli</button><button class="danger" id="delShop">Hapus dari Daftar Belanja</button></div>`);$('#saveShop').onclick=()=>{Object.assign(x,{name:$('#sName').value,category:$('#sCat').value,qty:+$('#sQty').value||0,unit:$('#sUnit').value,price:+$('#sPrice').value||0,expiry:$('#sExp').value,note:$('#sNote').value});save();closeOverlay();render()};$('#bought').onclick=()=>markBought(id);$('#delShop').onclick=()=>deleteShop(id)}
-function addShop(){data.shopping.push({id:uid(),stockId:null,name:'Item Baru',category:'Dapur',qty:1,unit:'pcs',price:0,priority:'Sedang',expiry:'',note:''});save();render();openShopEdit(data.shopping.at(-1).id)}
+function openShopEdit(id){let x=data.shopping.find(i=>i.id===id),st=data.items.find(i=>i.id===x.stockId);openOverlay(`<div class="sheet-head"><h2>Edit Belanja</h2><button class="close" onclick="closeOverlay()">✕</button></div><div class="form-grid"><div class="field"><label>Nama Barang</label><input id="sName" value="${x.name}"></div><div class="field"><label>Kategori</label><select id="sCat">${cats.map(v=>`<option ${v===x.category?'selected':''}>${v}</option>`).join('')}</select></div><div class="two"><div class="field"><label>Jumlah</label><input id="sQty" type="number" value="${x.qty}"></div><div class="field"><label>Satuan</label><select id="sUnit">${units.map(v=>`<option ${v===x.unit?'selected':''}>${v}</option>`).join('')}</select></div></div><div class="field"><label>Harga (opsional)</label><input id="sPrice" type="number" min="0" step="100" value="${x.price||''}" placeholder="Contoh: 25000"></div><div class="field"><label>Kedaluwarsa</label><input id="sExp" type="date" value="${x.expiry||''}"></div><div class="field"><label>Catatan</label><textarea id="sNote">${x.note||''}</textarea></div>${st&&st.unit!==x.unit?`<div class="field"><label>1 ${x.unit} = berapa ${st.unit}</label><input id="sConv" type="number" value="1"></div>`:''}</div><div class="actions"><button class="secondary" id="saveShop">Simpan Perubahan</button><button class="primary" id="bought">Tandai Sudah Dibeli</button><button class="danger" id="delShop">Hapus dari Daftar Belanja</button></div>`);$('#saveShop').onclick=()=>{Object.assign(x,{name:$('#sName').value,category:$('#sCat').value,qty:+$('#sQty').value||0,unit:$('#sUnit').value,price:+$('#sPrice').value||0,expiry:$('#sExp').value,note:$('#sNote').value,checked:!!x.checked});save();closeOverlay();render()};$('#bought').onclick=()=>markBought(id);$('#delShop').onclick=()=>deleteShop(id)}
+function addShop(){data.shopping.push({id:uid(),stockId:null,name:'Item Baru',category:'Dapur',qty:1,unit:'pcs',price:0,priority:'Sedang',expiry:'',note:'',checked:false});save();render();openShopEdit(data.shopping.at(-1).id)}
 function markBought(id){let x=data.shopping.find(i=>i.id===id),st=data.items.find(i=>i.id===x.stockId)||data.items.find(i=>i.name.toLowerCase()===x.name.toLowerCase());if(st){let add=x.qty;if(st.unit!==x.unit){let c=+($('#sConv')?.value||prompt(`1 ${x.unit} berisi berapa ${st.unit}?`));if(!c)return;add*=c}st.qty+=add;if(x.expiry)st.expiry=x.expiry;data.stockHistory.push({id:uid(),name:st.name,type:'in',qty:add,unit:st.unit,date:new Date().toISOString()})}else{st={id:uid(),name:x.name,category:x.category,qty:x.qty,min:0,unit:x.unit,expiry:x.expiry,location:'',note:x.note,opened:'',pao:''};data.items.push(st);data.stockHistory.push({id:uid(),name:st.name,type:'in',qty:st.qty,unit:st.unit,date:new Date().toISOString()})}data.shopHistory.push({id:uid(),name:x.name,category:x.category,qty:x.qty,unit:x.unit,price:x.price||0,date:new Date().toISOString()});data.shopping=data.shopping.filter(i=>i.id!==id);save();closeOverlay();render()}
 function deleteShop(id){let x=data.shopping.find(i=>i.id===id);if(confirm(`Hapus ${x.name} dari daftar belanja?`)){data.shopping=data.shopping.filter(i=>i.id!==id);save();closeOverlay();render()}}
 $$('.nav').forEach(b=>b.onclick=()=>go(b.dataset.screen));$('#stockSort').onchange=renderStock;$('#histShopBtn').onclick=()=>{histMode='shop';$('#histShopBtn').classList.add('on');$('#histStockBtn').classList.remove('on');renderHistory()};$('#histStockBtn').onclick=()=>{histMode='stock';$('#histStockBtn').classList.add('on');$('#histShopBtn').classList.remove('on');renderHistory()};$('#goLow').onclick=()=>{stockStatusFilter='low';go('stock')};$('#goExpiry').onclick=()=>{expiryOnly=true;stockFilter='all';stockStatusFilter='all';go('stock')};$('#overlay').onclick=e=>{if(e.target.id==='overlay')closeOverlay()};$('#searchBtn').onclick=()=>{let v=prompt('Cari barang:',searchTerm);if(v!==null){searchTerm=v;render()}};$('#filterBtn').onclick=()=>alert('Gunakan kategori, status, dan Urutkan untuk memfilter stok.');$('#resetDemo').onclick=()=>{data=JSON.parse(JSON.stringify(demo));save();render()};$$('[data-stockstatus]').forEach(b=>b.onclick=()=>{stockStatusFilter=stockStatusFilter===b.dataset.stockstatus?'all':b.dataset.stockstatus;expiryOnly=false;renderStock()});
 $('#plusBtn').onclick=()=>{const active=document.querySelector('.screen.active')?.id;if(active==='stock')openStockForm();else if(active==='shop')addShop();};
 $('#saveShoppingBtn').onclick=saveAllShopping;
-$('#todayText').textContent=new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});go('home');if('serviceWorker' in navigator){
+$('#todayText').textContent=new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+go('home');
+document.body.classList.remove('booting');if('serviceWorker' in navigator){
   addEventListener('load',async()=>{
     try{
       const reg=await navigator.serviceWorker.register('./service-worker.js?v=232');
@@ -124,3 +139,5 @@ $('#todayText').textContent=new Date().toLocaleDateString('id-ID',{weekday:'long
     }catch(e){ console.warn('SW register failed',e); }
   });
 }
+
+setTimeout(()=>document.body.classList.remove('booting'),500);
