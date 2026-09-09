@@ -1,7 +1,7 @@
 {
   "name": "Stok Rumah",
   "short_name": "Stok Rumah",
-  "start_url": "./",
+  "start_url": "./?v=2.3.2",
   "display": "standalone",
   "background_color": "#f6fbff",
   "theme_color": "#f6fbff",
