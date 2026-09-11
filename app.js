@@ -3,6 +3,7 @@
 
 
 
+
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],KEY='stokrumah-v20-data';
 const cats=['Dapur','Toilet','Laundry','Obat','Baby','Beauty'],units=['pcs','pack','box','botol','pouch','tube','strip','tablet','kapsul','sachet','gram','kg','ml','L','kaleng'],paoCats=['Beauty','Baby','Obat'],icons={
 Dapur:`<svg viewBox='0 0 24 24'><path d='M5 10h14v7a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3z'/><path d='M8 10V7m4 3V5m4 5V7'/></svg>`,
@@ -127,7 +128,7 @@ function renderShop(){
             <button type="button" data-incshop="${x.id}" aria-label="Tambah jumlah">+</button>
           </div>
           <span class="shop-unit">${esc(x.unit)}</span>
-          <label class="price-edit" title="Harga per ${esc(x.unit)}"><span>Rp</span><input type="number" min="0" step="100" data-priceshop="${x.id}" value="${Number(x.price)||''}" placeholder="0"></label>
+          <label class="price-edit" title="Harga per ${esc(x.unit)}"><span>Rp</span><input type="number" inputmode="numeric" pattern="[0-9]*" min="0" step="100" data-priceshop="${x.id}" inputmode="numeric" pattern="[0-9]*" value="${Number(x.price)||''}" placeholder="0"></label>
         </div>
         <div class="current-stock">${st?`Stok terkini ${st.qty} ${esc(st.unit)} · Minimum ${st.min} ${esc(st.unit)}`:'Belum ada di stok'}</div>
       </div>
@@ -165,17 +166,31 @@ function renderHistory(){
       const dt=new Date(g.date);
       const date=dt.toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
       const time=dt.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
-      const qty=g.items.reduce((n,h)=>n+(Number(h.qty)||0),0);
+      const itemCount=g.items.length;
+      const totalPrice=g.items.reduce((t,h)=>t+(Number(h.price)||0)*(Number(h.qty)||0),0);
       return `<div class="receipt-card">
         <div class="receipt-head">
           <div class="receipt-title">
             <b>${date} · ${time}</b>
-            <span>${qty} barang</span>
+            <span>${itemCount} barang</span>
           </div>
           <div class="receipt-place">Pembelian melalui <strong>${esc(g.place||'Tidak dicatat')}</strong></div>
         </div>
         <div class="receipt-items">
-          ${g.items.map(h=>`<div class="receipt-line"><b>${esc(h.name)}</b><span>${h.qty} ${esc(h.unit)}</span></div>`).join('')}
+          ${g.items.map(h=>{
+            const subtotal=(Number(h.price)||0)*(Number(h.qty)||0);
+            return `<div class="receipt-line">
+              <b>${esc(h.name)}</b>
+              <div class="receipt-meta">
+                <span class="qty">${h.qty} ${esc(h.unit)}</span>
+                <span class="price">Rp ${subtotal.toLocaleString('id-ID')}</span>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+        <div class="receipt-total">
+          <span>Total Pembelian</span>
+          <b>Rp ${totalPrice.toLocaleString('id-ID')}</b>
         </div>
       </div>`;
     }).join('');
@@ -185,8 +200,8 @@ function renderHistory(){
   $('#historyContent').innerHTML=a.length?a.slice().reverse().map(h=>`<div class="hist-row"><div><b>${esc(h.name)}</b><small class="${h.type==='in'?'in':'out'}">${h.type==='in'?'Stok Masuk':'Stok Keluar'} ${h.type==='in'?'+':'-'}${h.qty} ${esc(h.unit)}</small></div><small>${new Date(h.date).toLocaleString('id-ID')}</small></div>`).join(''):'<div class="empty">Belum ada riwayat stok.</div>';
 }
 function openOverlay(v){$('#sheet').innerHTML=v;$('#overlay').classList.add('on')}function closeOverlay(){$('#overlay').classList.remove('on')}
-function stockFields(x={}){let c=x.category||'Dapur';return `<div class="form-grid"><div class="field"><label>Nama Barang</label><input id="fName" value="${esc(x.name||'')}"></div><div class="field"><label>Kategori</label><select id="fCat">${cats.map(v=>`<option ${v===c?'selected':''}>${v}</option>`).join('')}</select></div><div class="two"><div class="field"><label>Jumlah Stok</label><input id="fQty" type="number" step="any" value="${x.qty??0}"></div><div class="field"><label>Jumlah Minimum</label><input id="fMin" type="number" step="any" value="${x.min??0}"></div></div><div class="field"><label>Satuan</label><select id="fUnit">${units.map(v=>`<option ${v===(x.unit||'pcs')?'selected':''}>${v}</option>`).join('')}</select></div><div class="field"><label>Lokasi</label><input id="fLoc" value="${esc(x.location||'')}"></div><div class="field"><label>Kedaluwarsa</label><input id="fExp" type="date" value="${x.expiry||''}"></div><div id="paoBox" class="${paoCats.includes(c)?'':'hidden'}"><div class="two"><div class="field"><label>Tanggal Dibuka</label><input id="fOpened" type="date" value="${x.opened||''}"></div><div class="field"><label>PAO</label><select id="fPao"><option value="">-</option>${['3M','6M','12M','18M','24M','36M'].map(v=>`<option ${v===x.pao?'selected':''}>${v}</option>`).join('')}</select></div></div></div><div class="field"><label>Keterangan</label><textarea id="fNote">${esc(x.note||'')}</textarea></div></div>`}
-function openStockDetail(id){let x=data.items.find(i=>i.id===id);if(!x)return;openOverlay(`<div class="sheet-head"><h2>${esc(x.name)}</h2><button class="close" id="closeDetail">✕</button></div><div class="detail-grid"><div>Jumlah Stok</div><div>${x.qty} ${esc(x.unit)}</div><div>Jumlah Minimum</div><div>${x.min} ${esc(x.unit)}</div><div>Kategori</div><div>${esc(x.category)}</div><div>Lokasi</div><div>${esc(x.location||'-')}</div><div>Keterangan</div><div>${esc(x.note||'-')}</div><div>Kedaluwarsa</div><div>${fmt(x.expiry)}</div>${paoCats.includes(x.category)?`<div>Tanggal Dibuka</div><div>${fmt(x.opened)}</div><div>PAO</div><div>${esc(x.pao||'-')}</div><div>Batas Pakai Setelah Dibuka</div><div>${fmt(paoLimit(x))}</div>`:''}</div><div class="field" style="margin-top:14px"><label>Jumlah perubahan stok</label><input id="q" value="1" type="number" min="0" step="any"></div><div class="two" style="margin-top:10px"><button class="secondary" id="minus">− Stok Keluar</button><button class="primary" id="plus">＋ Stok Masuk</button></div><div class="actions"><button class="secondary" id="edit">Edit Detail</button><button class="danger" id="del">Hapus dari Stok</button></div>`);$('#closeDetail').onclick=closeOverlay;$('#minus').onclick=()=>adjustStock(id,-(+$('#q').value||1));$('#plus').onclick=()=>adjustStock(id,(+$('#q').value||1));$('#edit').onclick=()=>openStockForm(id);$('#del').onclick=()=>deleteStock(id)}
+function stockFields(x={}){let c=x.category||'Dapur';return `<div class="form-grid"><div class="field"><label>Nama Barang</label><input id="fName" value="${esc(x.name||'')}"></div><div class="field"><label>Kategori</label><select id="fCat">${cats.map(v=>`<option ${v===c?'selected':''}>${v}</option>`).join('')}</select></div><div class="two"><div class="field"><label>Jumlah Stok</label><input id="fQty" type="number" inputmode="decimal" step="any" value="${x.qty??0}"></div><div class="field"><label>Jumlah Minimum</label><input id="fMin" type="number" inputmode="decimal" step="any" value="${x.min??0}"></div></div><div class="field"><label>Satuan</label><select id="fUnit">${units.map(v=>`<option ${v===(x.unit||'pcs')?'selected':''}>${v}</option>`).join('')}</select></div><div class="field"><label>Lokasi</label><input id="fLoc" value="${esc(x.location||'')}"></div><div class="field"><label>Kedaluwarsa</label><input id="fExp" type="date" value="${x.expiry||''}"></div><div id="paoBox" class="${paoCats.includes(c)?'':'hidden'}"><div class="two"><div class="field"><label>Tanggal Dibuka</label><input id="fOpened" type="date" value="${x.opened||''}"></div><div class="field"><label>PAO</label><select id="fPao"><option value="">-</option>${['3M','6M','12M','18M','24M','36M'].map(v=>`<option ${v===x.pao?'selected':''}>${v}</option>`).join('')}</select></div></div></div><div class="field"><label>Keterangan</label><textarea id="fNote">${esc(x.note||'')}</textarea></div></div>`}
+function openStockDetail(id){let x=data.items.find(i=>i.id===id);if(!x)return;openOverlay(`<div class="sheet-head"><h2>${esc(x.name)}</h2><button class="close" id="closeDetail">✕</button></div><div class="detail-grid"><div>Jumlah Stok</div><div>${x.qty} ${esc(x.unit)}</div><div>Jumlah Minimum</div><div>${x.min} ${esc(x.unit)}</div><div>Kategori</div><div>${esc(x.category)}</div><div>Lokasi</div><div>${esc(x.location||'-')}</div><div>Keterangan</div><div>${esc(x.note||'-')}</div><div>Kedaluwarsa</div><div>${fmt(x.expiry)}</div>${paoCats.includes(x.category)?`<div>Tanggal Dibuka</div><div>${fmt(x.opened)}</div><div>PAO</div><div>${esc(x.pao||'-')}</div><div>Batas Pakai Setelah Dibuka</div><div>${fmt(paoLimit(x))}</div>`:''}</div><div class="field" style="margin-top:14px"><label>Jumlah perubahan stok</label><input id="q" value="1" type="number" inputmode="decimal" min="0" step="any"></div><div class="two" style="margin-top:10px"><button class="secondary" id="minus">− Stok Keluar</button><button class="primary" id="plus">＋ Stok Masuk</button></div><div class="actions"><button class="secondary" id="edit">Edit Detail</button><button class="danger" id="del">Hapus dari Stok</button></div>`);$('#closeDetail').onclick=closeOverlay;$('#minus').onclick=()=>adjustStock(id,-(+$('#q').value||1));$('#plus').onclick=()=>adjustStock(id,(+$('#q').value||1));$('#edit').onclick=()=>openStockForm(id);$('#del').onclick=()=>deleteStock(id)}
 function adjustStock(id,d){let x=data.items.find(i=>i.id===id);if(!x)return;let old=x.qty;x.qty=Math.max(0,+(x.qty+d).toFixed(3));let a=x.qty-old;if(a)data.stockHistory.push({id:uid(),name:x.name,type:a>0?'in':'out',qty:Math.abs(a),unit:x.unit,date:new Date().toISOString()});save();closeOverlay();render()}
 function openStockForm(id){let x=id?data.items.find(i=>i.id===id):null;openOverlay(`<div class="sheet-head"><h2>${x?'Edit Stok':'Tambah Barang'}</h2><button class="close" id="closeStockForm">✕</button></div>${stockFields(x||{})}<div class="actions"><button class="primary" id="saveStock">Simpan</button></div>`);$('#closeStockForm').onclick=closeOverlay;$('#fCat').onchange=()=>$('#paoBox').classList.toggle('hidden',!paoCats.includes($('#fCat').value));$('#saveStock').onclick=()=>{let o={id:x?.id||uid(),name:$('#fName').value.trim(),category:$('#fCat').value,qty:+$('#fQty').value||0,min:+$('#fMin').value||0,unit:$('#fUnit').value,location:$('#fLoc').value,expiry:$('#fExp').value,opened:$('#fOpened')?.value||'',pao:$('#fPao')?.value||'',note:$('#fNote').value};if(!o.name)return alert('Nama barang belum diisi');if(x){let old=x.qty;Object.assign(x,o);let d=x.qty-old;if(d)data.stockHistory.push({id:uid(),name:x.name,type:d>0?'in':'out',qty:Math.abs(d),unit:x.unit,date:new Date().toISOString()})}else{data.items.push(o);if(o.qty)data.stockHistory.push({id:uid(),name:o.name,type:'in',qty:o.qty,unit:o.unit,date:new Date().toISOString()})}save();closeOverlay();render()}}
 function deleteStock(id){let x=data.items.find(i=>i.id===id);if(!x)return;if(confirm(`Hapus ${x.name} dari stok?`)){data.items=data.items.filter(i=>i.id!==id);data.shopping=data.shopping.filter(s=>s.stockId!==id);data.dismissedShopping=data.dismissedShopping.filter(i=>i!==id);save();closeOverlay();render()}}
@@ -202,7 +217,7 @@ function addStockToShopping(id){
     toast(`${x.name} sudah ada di Belanja`);
   }
 }
-function openShopEdit(id){let x=data.shopping.find(i=>i.id===id);if(!x)return;openOverlay(`<div class="sheet-head"><h2>Edit Belanja</h2><button class="close" id="closeShopEdit">✕</button></div><div class="form-grid"><div class="field"><label>Nama Barang</label><input id="sName" value="${esc(x.name)}"></div><div class="field"><label>Kategori</label><select id="sCat">${cats.map(v=>`<option ${v===x.category?'selected':''}>${v}</option>`).join('')}</select></div><div class="two"><div class="field"><label>Jumlah</label><input id="sQty" type="number" step="any" value="${x.qty}"></div><div class="field"><label>Satuan</label><select id="sUnit">${units.map(v=>`<option ${v===x.unit?'selected':''}>${v}</option>`).join('')}</select></div></div><div class="field"><label>Harga (opsional)</label><input id="sPrice" type="number" min="0" step="100" value="${x.price||''}" placeholder="Contoh: 25000"></div><div class="field"><label>Kedaluwarsa</label><input id="sExp" type="date" value="${x.expiry||''}"></div><div class="field"><label>Catatan</label><textarea id="sNote">${esc(x.note||'')}</textarea></div></div><div class="actions"><button class="primary" id="saveShop">Simpan Perubahan</button><button class="danger" id="delShop">Hapus dari Daftar Belanja</button></div>`);$('#closeShopEdit').onclick=closeOverlay;$('#saveShop').onclick=()=>{Object.assign(x,{name:$('#sName').value.trim(),category:$('#sCat').value,qty:+$('#sQty').value||0,unit:$('#sUnit').value,price:+$('#sPrice').value||0,expiry:$('#sExp').value,note:$('#sNote').value,checked:!!x.checked});save();closeOverlay();render()};$('#delShop').onclick=()=>deleteShop(id)}
+function openShopEdit(id){let x=data.shopping.find(i=>i.id===id);if(!x)return;openOverlay(`<div class="sheet-head"><h2>Edit Belanja</h2><button class="close" id="closeShopEdit">✕</button></div><div class="form-grid"><div class="field"><label>Nama Barang</label><input id="sName" value="${esc(x.name)}"></div><div class="field"><label>Kategori</label><select id="sCat">${cats.map(v=>`<option ${v===x.category?'selected':''}>${v}</option>`).join('')}</select></div><div class="two"><div class="field"><label>Jumlah</label><input id="sQty" type="number" inputmode="decimal" step="any" value="${x.qty}"></div><div class="field"><label>Satuan</label><select id="sUnit">${units.map(v=>`<option ${v===x.unit?'selected':''}>${v}</option>`).join('')}</select></div></div><div class="field"><label>Harga (opsional)</label><input id="sPrice" type="number" inputmode="numeric" min="0" step="100" value="${x.price||''}" placeholder="Contoh: 25000"></div><div class="field"><label>Kedaluwarsa</label><input id="sExp" type="date" value="${x.expiry||''}"></div><div class="field"><label>Catatan</label><textarea id="sNote">${esc(x.note||'')}</textarea></div></div><div class="actions"><button class="primary" id="saveShop">Simpan Perubahan</button><button class="danger" id="delShop">Hapus dari Daftar Belanja</button></div>`);$('#closeShopEdit').onclick=closeOverlay;$('#saveShop').onclick=()=>{Object.assign(x,{name:$('#sName').value.trim(),category:$('#sCat').value,qty:+$('#sQty').value||0,unit:$('#sUnit').value,price:+$('#sPrice').value||0,expiry:$('#sExp').value,note:$('#sNote').value,checked:!!x.checked});save();closeOverlay();render()};$('#delShop').onclick=()=>deleteShop(id)}
 function addShop(){let x={id:uid(),stockId:null,name:'Item Baru',category:'Dapur',qty:1,unit:'pcs',price:0,priority:'Sedang',expiry:'',note:'',checked:false};data.shopping.push(x);save();render();openShopEdit(x.id)}
 function deleteShop(id){let x=data.shopping.find(i=>i.id===id);if(!x)return;if(confirm(`Hapus ${x.name} dari daftar belanja?`)){if(x.stockId&&!data.dismissedShopping.includes(x.stockId))data.dismissedShopping.push(x.stockId);data.shopping=data.shopping.filter(i=>i.id!==id);save();closeOverlay();render()}}
 function saveAllShopping(){
@@ -281,6 +296,7 @@ $('#plusBtn').onclick=()=>{const active=document.querySelector('.screen.active')
 $('#todayText').textContent=new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 stockFilter='all';stockStatusFilter='all';expiryOnly=false;searchTerm='';go('home');updateGreeting();
 if('serviceWorker'in navigator)addEventListener('load',async()=>{try{const r=await navigator.serviceWorker.register('./service-worker.js?v=fixed');r.update()}catch(e){console.warn('Service worker:',e)}});
+
 
 
 
