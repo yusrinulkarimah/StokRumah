@@ -1,6 +1,13 @@
 
+
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],KEY='stokrumah-v20-data';
-const cats=['Dapur','Toilet','Laundry','Obat','Baby','Beauty'],units=['pcs','pack','box','botol','pouch','tube','strip','tablet','kapsul','sachet','gram','kg','ml','L','kaleng'],paoCats=['Beauty','Baby','Obat'],icons={Dapur:'🍲',Toilet:'🧴',Laundry:'🧺',Obat:'🩹',Baby:'🧸',Beauty:'💄'};
+const cats=['Dapur','Toilet','Laundry','Obat','Baby','Beauty'],units=['pcs','pack','box','botol','pouch','tube','strip','tablet','kapsul','sachet','gram','kg','ml','L','kaleng'],paoCats=['Beauty','Baby','Obat'],icons={
+Dapur:`<svg viewBox='0 0 24 24'><path d='M5 10h14v7a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3z'/><path d='M8 10V7m4 3V5m4 5V7'/></svg>`,
+Toilet:`<svg viewBox='0 0 24 24'><path d='M9 4h6v4H9z'/><path d='M7 8h10v12H7z'/><path d='M10 12h4'/></svg>`,
+Laundry:`<svg viewBox='0 0 24 24'><path d='M5 7h14l-1 13H6z'/><path d='M8 7V4h8v3'/><path d='M8 12h8'/></svg>`,
+Obat:`<svg viewBox='0 0 24 24'><path d='M8 12h8'/><path d='M12 8v8'/><rect x='5' y='5' width='14' height='14' rx='4'/></svg>`,
+Baby:`<svg viewBox='0 0 24 24'><circle cx='12' cy='11' r='5'/><path d='M9 16v3m6-3v3M9 9c1-2 5-2 6 0'/></svg>`,
+Beauty:`<svg viewBox='0 0 24 24'><path d='M9 4h6v5H9z'/><path d='M8 9h8v11H8z'/><path d='M10 13h4'/></svg>`};
 const demo={items:[{id:1,name:'Beras',category:'Dapur',qty:1.5,min:2,unit:'kg',expiry:'2026-10-20',location:'Dapur',note:'',opened:'',pao:''},{id:2,name:'Minyak Goreng',category:'Dapur',qty:600,min:1000,unit:'ml',expiry:'2027-02-01',location:'Dapur',note:'',opened:'',pao:''},{id:3,name:'Gula Pasir',category:'Dapur',qty:0,min:1,unit:'kg',expiry:'2027-01-15',location:'Dapur',note:'',opened:'',pao:''},{id:4,name:'Popok M',category:'Baby',qty:18,min:20,unit:'pcs',expiry:'2027-06-01',location:'Lemari Baby',note:'Untuk pemakaian malam',opened:'',pao:''},{id:5,name:'Detergen Bubuk',category:'Laundry',qty:1,min:2,unit:'pouch',expiry:'',location:'Laundry',note:'',opened:'',pao:''},{id:6,name:'Sampo',category:'Beauty',qty:1,min:2,unit:'botol',expiry:'2027-08-01',location:'Kamar mandi',note:'',opened:'2026-08-01',pao:'12M'},{id:7,name:'Paracetamol',category:'Obat',qty:5,min:10,unit:'tablet',expiry:'2026-09-20',location:'Kotak obat',note:'',opened:'',pao:''},{id:8,name:'Pasta Gigi',category:'Toilet',qty:1,min:2,unit:'tube',expiry:'2027-05-01',location:'Kamar mandi',note:'',opened:'',pao:''}],shopping:[],shopHistory:[{id:101,name:'Susu Formula',category:'Baby',qty:1,unit:'kaleng',price:0,date:'2026-08-28T19:45:00'}],stockHistory:[{id:201,name:'Popok M',type:'out',qty:2,unit:'pcs',date:'2026-08-29T08:30:00'}],dismissedShopping:[]};
 function cloneDemo(){return JSON.parse(JSON.stringify(demo))}
 let data;
@@ -113,14 +120,18 @@ function renderHistory(){
       if(new Date(h.date)>new Date(groups.get(key).date))groups.get(key).date=h.date;
     });
     const ordered=[...groups.values()].sort((x,y)=>new Date(y.date)-new Date(x.date));
-    $('#historyContent').innerHTML=ordered.map((g,idx)=>`
-      <div class="history-purchase">
+    $('#historyContent').innerHTML=ordered.map((g,idx)=>{
+      const total=g.items.reduce((t,h)=>t+(Number(h.price)||0)*(Number(h.qty)||0),0);
+      const dt=new Date(g.date);
+      return `<div class="history-purchase">
         <div class="purchase-head">
-          <b>Pembelanjaan ${ordered.length-idx}</b>
-          <small>${new Date(g.date).toLocaleString('id-ID',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}</small>
+          <div class="purchase-icon"><svg viewBox="0 0 24 24"><path d="M3 5h2l2 10h10l2-7H7"/><circle cx="9" cy="19" r="1"/><circle cx="17" cy="19" r="1"/></svg></div>
+          <div class="purchase-meta"><b>Belanja ${dt.toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'})}</b><small>${dt.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})} · ${g.items.length} item</small></div>
+          <div class="purchase-total"><b>${total?'Rp '+total.toLocaleString('id-ID'):'Selesai'}</b><small>Total pembelian</small></div>
         </div>
-        ${g.items.map(h=>`<div class="purchase-item"><b>${esc(h.name)}</b><span>${h.qty} ${esc(h.unit)}</span></div>`).join('')}
-      </div>`).join('');
+        ${g.items.map(h=>`<div class="purchase-item"><div class="item-left"><span class="item-dot"></span><b>${esc(h.name)}</b></div><span>${h.qty} ${esc(h.unit)}</span></div>`).join('')}
+      </div>`;
+    }).join('');
     return;
   }
   const a=data.stockHistory;
@@ -190,4 +201,5 @@ $('#plusBtn').onclick=()=>{const active=document.querySelector('.screen.active')
 $('#todayText').textContent=new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 stockFilter='all';stockStatusFilter='all';expiryOnly=false;searchTerm='';go('home');
 if('serviceWorker'in navigator)addEventListener('load',async()=>{try{const r=await navigator.serviceWorker.register('./service-worker.js?v=fixed');r.update()}catch(e){console.warn('Service worker:',e)}});
+
 
