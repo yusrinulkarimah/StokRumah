@@ -1,5 +1,6 @@
 
 
+
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],KEY='stokrumah-v20-data';
 const cats=['Dapur','Toilet','Laundry','Obat','Baby','Beauty'],units=['pcs','pack','box','botol','pouch','tube','strip','tablet','kapsul','sachet','gram','kg','ml','L','kaleng'],paoCats=['Beauty','Baby','Obat'],icons={
 Dapur:`<svg viewBox='0 0 24 24'><path d='M5 10h14v7a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3z'/><path d='M8 10V7m4 3V5m4 5V7'/></svg>`,
@@ -36,6 +37,11 @@ function syncShopping(){
   });
   save();
 }
+function updateGreeting(){
+ const h=new Date().getHours();
+ const g=h<11?'Selamat Pagi':h<15?'Selamat Siang':h<19?'Selamat Sore':'Selamat Malam';
+ const hero=$('#home .hero h2'); if(hero) hero.textContent=g+', Ayah!';
+}
 function go(id){
   $$('.screen').forEach(x=>x.classList.toggle('active',x.id===id));
   $$('.nav').forEach(x=>x.classList.toggle('on',x.dataset.screen===id));
@@ -47,24 +53,44 @@ function go(id){
 }
 function render(){syncShopping();renderHome();renderStockTabs();renderStock();renderShop();renderHistory()}
 function renderHome(){
-  let low=data.items.filter(x=>status(x)==='low').length,out=data.items.filter(x=>status(x)==='out').length,exp=data.items.filter(x=>{let d=dayDiff(effExp(x));return d>=0&&d<=30}).length;
-  $('#lowText').textContent=`${low+out} barang hampir habis / habis`;$('#expiryText').textContent=`${exp} barang hampir kedaluwarsa`;
-  $('#catGrid').innerHTML=cats.map(c=>`<div class="cat" data-cat="${c}"><div class="ico">${icons[c]}</div><b>${c}</b></div>`).join('');
-  $$('[data-cat]').forEach(b=>b.onclick=()=>{stockFilter=b.dataset.cat;stockStatusFilter='all';expiryOnly=false;go('stock')});
+ const low=data.items.filter(x=>status(x)==='low').length,out=data.items.filter(x=>status(x)==='out').length;
+ const exp=data.items.filter(x=>{const d=dayDiff(effExp(x));return d>=0&&d<=30}).length;
+ const iconMap={Dapur:'🍲',Toilet:'🧴',Laundry:'🧺',Obat:'💊',Baby:'👶',Beauty:'💄'};
+ $('#lowText').textContent=`${low+out} barang perlu segera dibeli`;
+ $('#expiryText').textContent=`${exp} barang dalam 30 hari ke depan`;
+ $('#catGrid').innerHTML=cats.map(c=>`<div class="cat" data-cat="${esc(c)}"><div class="ico">${iconMap[c]||'◻︎'}</div><b>${esc(c)}</b></div>`).join('');
+ $$('#catGrid .cat').forEach(b=>b.onclick=()=>{stockFilter=b.dataset.cat;stockStatusFilter='all';expiryOnly=false;go('stock')});
+ updateGreeting();
 }
 function renderStockTabs(){
-  $('#stockTabs').innerHTML=['all',...cats].map(c=>`<button class="tab ${stockFilter===c?'on':''}" data-sf="${c}">${c==='all'?'Semua':c}</button>`).join('');
-  $$('[data-sf]').forEach(b=>b.onclick=()=>{stockFilter=b.dataset.sf;expiryOnly=false;renderStockTabs();renderStock()});
+ const iconMap={Dapur:'🍲',Toilet:'🧴',Laundry:'🧺',Obat:'💊',Baby:'👶',Beauty:'💄'};
+ $('#stockTabs').innerHTML=cats.map(c=>`<button class="tab ${stockFilter===c?'on':''}" data-sf="${esc(c)}"><div style="font-size:23px;margin-bottom:5px">${iconMap[c]||'◻︎'}</div>${esc(c)}</button>`).join('');
+ $$('#stockTabs .tab').forEach(b=>b.onclick=()=>{stockFilter=b.dataset.sf;expiryOnly=false;renderStockTabs();renderStock()});
 }
 function renderStock(){
-  let a=[...data.items];
-  if(stockFilter!=='all')a=a.filter(x=>x.category===stockFilter);if(stockStatusFilter!=='all')a=a.filter(x=>status(x)===stockStatusFilter);if(expiryOnly)a=a.filter(x=>{let d=dayDiff(effExp(x));return d>=0&&d<=30});if(searchTerm)a=a.filter(x=>x.name.toLowerCase().includes(searchTerm.toLowerCase()));
-  let so=$('#stockSort').value;a.sort((x,y)=>so==='name'?x.name.localeCompare(y.name):so==='low'?(x.qty-x.min)-(y.qty-y.min):so==='expiry'?effExp(x).localeCompare(effExp(y)):x.category.localeCompare(y.category));
-  $('#stockCount').textContent=`${a.length} barang`;let low=data.items.filter(x=>status(x)==='low').length,out=data.items.filter(x=>status(x)==='out').length,safe=data.items.filter(x=>status(x)==='safe').length;$('#ssLow').textContent=low;$('#ssThin').textContent=out;$('#ssSafe').textContent=safe;
-  $('#stockList').innerHTML=a.length?a.map(x=>{const st=status(x)==='safe'?'<span class="badge safe">Aman</span>':status(x)==='low'?'<span class="badge warn-b">Hampir Habis</span>':'<span class="badge danger-b">Habis</span>';return `<div class="stock-tr"><div class="name" data-stock="${x.id}">${esc(x.name)}</div><div class="cell">${x.qty}</div><div class="cell">${x.min}</div><div class="cell">${esc(x.unit)}</div><div class="cell">${x.expiry?fmt(x.expiry):'–'}</div><div class="cell">${paoCats.includes(x.category)&&x.pao?esc(x.pao):'–'}</div><div class="cell">${st}</div><div class="stock-actions"><button class="mini-edit cart-btn ${data.shopping.some(s=>s.stockId===x.id)?'in-cart':''}" data-cartstock="${x.id}" title="Tambah ke belanja" aria-label="Tambah ${esc(x.name)} ke belanja">🛒</button><button class="mini-trash" data-delstock="${x.id}" title="Hapus">🗑</button></div></div>`}).join(''):'<div class="empty">Belum ada barang.</div>';
-  $$('[data-stock]').forEach(e=>e.onclick=()=>openStockDetail(Number(e.dataset.stock)));
-  $$('[data-cartstock]').forEach(e=>e.onclick=ev=>{ev.preventDefault();ev.stopPropagation();addStockToShopping(Number(e.dataset.cartstock))});
-  $$('[data-delstock]').forEach(e=>e.onclick=ev=>{ev.preventDefault();ev.stopPropagation();deleteStock(Number(e.dataset.delstock))});
+ let a=[...data.items];
+ if(stockFilter!=='all')a=a.filter(x=>x.category===stockFilter);
+ if(stockStatusFilter!=='all')a=a.filter(x=>status(x)===stockStatusFilter);
+ if(expiryOnly)a=a.filter(x=>{let d=dayDiff(effExp(x));return d>=0&&d<=30});
+ if(searchTerm)a=a.filter(x=>x.name.toLowerCase().includes(searchTerm.toLowerCase()));
+ a.sort((x,y)=>x.name.localeCompare(y.name));
+ const iconMap={Dapur:'🍲',Toilet:'🧴',Laundry:'🧺',Obat:'💊',Baby:'👶',Beauty:'💄'};
+ $('#stockList').innerHTML=a.length?a.map(x=>{
+   const s=status(x);
+   const badge=s==='safe'?'<span class="badge safe">Aman</span>':s==='low'?'<span class="badge warn-b">Hampir Habis</span>':'<span class="badge danger-b">Habis</span>';
+   return `<div class="stock-tr">
+     <div class="stock-avatar">${iconMap[x.category]||'◻︎'}</div>
+     <div class="name" data-stock="${x.id}">${esc(x.name)}</div>
+     <div class="stock-meta">${x.qty} ${esc(x.unit)}</div>
+     <div class="stock-badge">${badge}</div>
+     <button class="stock-more" data-stock="${x.id}" aria-label="Detail">•••</button>
+     <div class="stock-actions">
+       <button class="cart-btn ${data.shopping.some(s=>s.stockId===x.id)?'in-cart':''}" data-cartstock="${x.id}" title="Tambah ke belanja">🛒</button>
+     </div>
+   </div>`;
+ }).join(''):'<div class="empty">Belum ada barang.</div>';
+ $$('[data-stock]').forEach(e=>e.onclick=()=>openStockDetail(Number(e.dataset.stock)));
+ $$('[data-cartstock]').forEach(e=>e.onclick=ev=>{ev.preventDefault();ev.stopPropagation();addStockToShopping(Number(e.dataset.cartstock))});
 }
 function renderShop(){
   let a=[...data.shopping];
@@ -194,12 +220,15 @@ $$('.nav').forEach(b=>b.onclick=()=>go(b.dataset.screen));
 $('#stockSort').onchange=renderStock;$('#shopSort').onchange=renderShop;
 $('#histShopBtn').onclick=()=>{histMode='shop';$('#histShopBtn').classList.add('on');$('#histStockBtn').classList.remove('on');renderHistory()};$('#histStockBtn').onclick=()=>{histMode='stock';$('#histStockBtn').classList.add('on');$('#histShopBtn').classList.remove('on');renderHistory()};
 $('#goLow').onclick=()=>{stockStatusFilter='low';expiryOnly=false;go('stock')};$('#goExpiry').onclick=()=>{expiryOnly=true;stockFilter='all';stockStatusFilter='all';go('stock')};
-$('#overlay').onclick=e=>{if(e.target.id==='overlay')closeOverlay()};$('#searchBtn').onclick=()=>{let v=prompt('Cari barang:',searchTerm);if(v!==null){searchTerm=v;render()}};$('#filterBtn').onclick=()=>alert('Gunakan kategori, status, dan Urutkan untuk memfilter stok.');
+$('#overlay').onclick=e=>{if(e.target.id==='overlay')closeOverlay()};$('#searchBtn').onclick=()=>{let v=prompt('Cari barang:',searchTerm);if(v!==null){searchTerm=v;render()}};$('#stockSearchField').onclick=()=>{let v=prompt('Cari barang:',searchTerm||'');if(v!==null){searchTerm=v.trim();renderStock()}};
+$('#stockFilterVisual').onclick=()=>toast('Pilih kategori di atas untuk memfilter');
+$('#filterBtn').onclick=()=>alert('Gunakan kategori, status, dan Urutkan untuk memfilter stok.');
 $('#resetDemo').onclick=()=>{if(confirm('Reset ke data contoh?')){data=cloneDemo();save();render()}};
 $$('[data-stockstatus]').forEach(b=>b.onclick=()=>{stockStatusFilter=stockStatusFilter===b.dataset.stockstatus?'all':b.dataset.stockstatus;expiryOnly=false;renderStock()});
 $('#plusBtn').onclick=()=>{const active=document.querySelector('.screen.active')?.id;if(active==='stock')openStockForm();else if(active==='shop')addShop()};$('#saveShoppingBtn').onclick=saveAllShopping;
 $('#todayText').textContent=new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-stockFilter='all';stockStatusFilter='all';expiryOnly=false;searchTerm='';go('home');
+stockFilter='all';stockStatusFilter='all';expiryOnly=false;searchTerm='';go('home');updateGreeting();
 if('serviceWorker'in navigator)addEventListener('load',async()=>{try{const r=await navigator.serviceWorker.register('./service-worker.js?v=fixed');r.update()}catch(e){console.warn('Service worker:',e)}});
+
 
 

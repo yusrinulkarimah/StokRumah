@@ -67,6 +67,250 @@
 .purchase-head .purchase-total{text-align:right}.purchase-head .purchase-total b{display:block;color:#66788d;font-size:13px}.purchase-head .purchase-total small{font-size:10px;color:#a0a0a7}
 .purchase-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 16px;border-bottom:1px solid #f1eeeb}.purchase-item:last-child{border-bottom:0}.purchase-item .item-left{display:flex;align-items:center;gap:10px;min-width:0}.purchase-item .item-dot{width:9px;height:9px;border-radius:50%;background:#c7b7cf;flex:0 0 auto}.purchase-item:nth-child(3n) .item-dot{background:#b7cdbf}.purchase-item:nth-child(3n+1) .item-dot{background:#e5b8bd}.purchase-item:nth-child(3n+2) .item-dot{background:#b9d1e1}.purchase-item b{font-size:13px;color:#4f5664}.purchase-item span{color:#6f7b8a;font-weight:700;white-space:nowrap;font-size:12px}
 
+
+/* ===== Final UI inspired by approved mockup ===== */
+:root{
+  --bg:#f7f8ff;
+  --surface:#ffffff;
+  --ink:#12183b;
+  --muted:#7e86a6;
+  --line:#e7eaf6;
+  --primary:#5656d8;
+  --primary-soft:#eeeeff;
+  --shadow:0 12px 30px rgba(61,72,126,.08);
+  --r-xl:26px;
+  --r-lg:22px;
+  --r-md:18px;
+}
+body{
+  background:linear-gradient(180deg,#f3f5ff 0%,#fbfcff 100%);
+  color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Arial,sans-serif;
+}
+.app{background:linear-gradient(180deg,#fbfcff 0%,#f9fbff 100%)}
+header{
+  padding:22px 22px 10px;
+  background:linear-gradient(180deg,rgba(250,251,255,.97),rgba(250,251,255,.91));
+  border-bottom:0;
+}
+.head h1{font-size:31px;letter-spacing:-1px;font-weight:800;color:#10163a}
+.icon-btn{
+  width:46px;height:46px;border-radius:16px;
+  background:#fff;border:1px solid #eef0f8;
+  box-shadow:0 7px 20px rgba(60,70,120,.07);
+  color:#28315c;
+}
+.screen{padding:0 22px 28px}
+.hero{
+  border:0;
+  background:transparent;
+  box-shadow:none;
+  padding:4px 0 12px;
+}
+.hero h2{
+  font-size:29px;
+  line-height:1.05;
+  letter-spacing:-.7px;
+  color:#2f3a8f;
+  margin-bottom:7px;
+}
+.hero small{font-size:15px;color:#7e86a6}
+.house{display:none}
+.section-title{
+  font-size:18px;
+  margin:22px 2px 12px;
+  color:#13193c;
+  letter-spacing:-.2px;
+}
+.categories{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+}
+.cat{
+  min-height:122px;
+  padding:18px 10px 14px;
+  border:0;
+  border-radius:22px;
+  box-shadow:none;
+  background:#fff;
+  transition:.15s ease;
+}
+.cat:nth-child(1){background:linear-gradient(145deg,#ffe0d1,#ffd6c9)}
+.cat:nth-child(2){background:linear-gradient(145deg,#dbf6ed,#ccefe5)}
+.cat:nth-child(3){background:linear-gradient(145deg,#dde9ff,#d4e3ff)}
+.cat:nth-child(4){background:linear-gradient(145deg,#ffe0e7,#ffd9e3)}
+.cat:nth-child(5){background:linear-gradient(145deg,#fff0c9,#ffe7b6)}
+.cat:nth-child(6){background:linear-gradient(145deg,#eee3ff,#e7dcff)}
+.cat .ico{
+  width:54px;height:54px;
+  border-radius:0;
+  margin:0 auto 9px;
+  display:grid;place-items:center;
+  background:transparent!important;
+  font-size:34px;
+  color:#19234f;
+}
+.cat b{font-size:15px;color:#1a2046}
+.metrics{display:none!important}
+.summary-card{
+  border:1px solid #eef0f7;
+  border-radius:22px;
+  min-height:78px;
+  padding:15px 16px;
+  background:#fff;
+  box-shadow:var(--shadow);
+}
+.summary-card .round{
+  width:52px;height:52px;border-radius:18px;
+  font-size:24px;
+}
+#goLow .round{background:#fff2da;color:#9b6a2b}
+#goExpiry .round{background:#ffe7ec;color:#c73a5c}
+.summary-card b{font-size:16px;color:#171d43}
+.summary-card:after{content:"›";font-size:28px;color:#4d5681}
+.summary-card>div:last-child{display:none}
+
+/* Decorative home banner */
+.home-quote{
+  margin-top:18px;
+  min-height:128px;
+  border-radius:24px;
+  overflow:hidden;
+  position:relative;
+  padding:22px 18px 22px 160px;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  color:#5d6290;
+  font-style:italic;
+  background:
+    radial-gradient(circle at 18% 78%,#b9d8ae 0 10%,transparent 11%),
+    radial-gradient(circle at 31% 84%,#9ac594 0 9%,transparent 10%),
+    linear-gradient(180deg,#eef4ff,#eef7f4);
+  border:1px solid #edf0f8;
+}
+.home-quote .home-art{
+  position:absolute;left:18px;bottom:14px;
+  width:130px;height:88px;
+  border-radius:18px;
+  background:linear-gradient(145deg,#fff7ee,#ffd9bf);
+  display:grid;place-items:center;
+  font-size:58px;
+}
+
+/* Stock */
+#stock .stock-summary,#stock .toolbar>span:last-child{display:none!important}
+#stockTabs{
+  background:#fff;
+  border-radius:22px;
+  padding:10px;
+  gap:8px;
+  box-shadow:var(--shadow);
+  margin-bottom:14px;
+}
+#stockTabs .tab{
+  border:0;
+  border-radius:16px;
+  min-width:64px;
+  min-height:76px;
+  padding:10px 8px;
+  background:#f7f8ff;
+  color:#343b63;
+  white-space:normal;
+  font-size:12px;
+}
+#stockTabs .tab.on{background:#ffe1d3;color:#23294f}
+.stock-search-wrap{
+  display:grid;
+  grid-template-columns:1fr 50px;
+  gap:10px;
+  margin-bottom:16px;
+}
+.stock-search{
+  display:flex;align-items:center;gap:10px;
+  height:54px;padding:0 16px;
+  background:#fff;border:1px solid #e9edf7;border-radius:18px;
+  color:#9aa2bc;box-shadow:0 7px 20px rgba(60,70,120,.05);
+}
+.stock-filter-btn{
+  height:54px;border:1px solid #e9edf7;border-radius:18px;background:#fff;color:#5656d8;
+}
+.stock-table{
+  overflow:visible;
+  border:0;
+  background:transparent;
+  box-shadow:none;
+}
+.stock-head{display:none}
+.stock-tr{
+  min-width:0;
+  display:grid;
+  grid-template-columns:56px minmax(0,1fr) 40px 48px;
+  align-items:center;
+  padding:14px 14px;
+  margin-bottom:10px;
+  border:1px solid #edf0f8;
+  border-radius:20px;
+  background:#fff;
+  box-shadow:var(--shadow);
+}
+.stock-tr .name{
+  font-size:16px;
+  font-weight:800;
+  color:#151b42;
+  grid-column:2;
+  grid-row:1;
+}
+.stock-tr .cell{display:none}
+.stock-tr .stock-meta{
+  grid-column:2;
+  grid-row:2;
+  margin-top:4px;
+  color:#707897;
+  font-size:13px;
+}
+.stock-tr .stock-badge{
+  grid-column:2;
+  grid-row:3;
+  margin-top:7px;
+}
+.stock-avatar{
+  grid-column:1;grid-row:1/4;
+  width:44px;height:44px;border-radius:14px;
+  display:grid;place-items:center;
+  background:#f1f3ff;font-size:23px;
+}
+.stock-more{
+  grid-column:3;grid-row:1/4;
+  border:0;background:transparent;color:#6f7798;font-size:24px;
+}
+.stock-actions{
+  grid-column:4;grid-row:1/4;
+  display:block;
+}
+.stock-actions .mini-trash{display:none}
+.stock-actions .cart-btn{
+  width:42px;height:42px;border:0;border-radius:14px;
+  background:#efefff;color:#5656d8;
+  font-size:20px;
+}
+.stock-actions .cart-btn.in-cart{background:#e8f6ee;color:#2e8b5a}
+#stock .toolbar{display:none!important}
+
+/* bottom nav exactly 4 */
+.bottom{grid-template-columns:repeat(4,1fr);padding:10px 14px calc(10px + env(safe-area-inset-bottom))}
+.nav{font-size:11px}
+.nav svg{width:23px;height:23px}
+.nav.on{
+  background:#efefff;
+  border-radius:16px;
+  min-height:54px;
+  color:#5656d8;
+}
+
+/* General polish */
+.row,.history-purchase,.sheet{border-color:#edf0f8}
+.add-wide,.primary{background:linear-gradient(135deg,#6767df,#5353cf)}
+
 </style></head>
 <body><div class="app"><header><div class="head"><h1 id="pageTitle">Beranda</h1><div class="head-icons"><button class="icon-btn" id="searchBtn" style="display:none"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.3-3.3"/></svg></button><button class="icon-btn" id="plusBtn" style="display:none"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button><button class="icon-btn" id="filterBtn" style="display:none"><svg viewBox="0 0 24 24"><path d="M4 5h16l-6 7v5l-4 2v-7z"/></svg></button></div></div></header>
 <main>
@@ -76,8 +320,17 @@
 <div class="section-title">Ringkasan</div>
 <div class="summary-card click" id="goLow"><div class="round">🛒</div><div class="grow"><b id="lowText"></b></div><div>›</div></div>
 <div class="summary-card click" id="goExpiry"><div class="round">🗓️</div><div class="grow"><b id="expiryText"></b></div><div>›</div></div>
+
+    <div class="home-quote">
+      <div class="home-art">🏡</div>
+      <div>“Rumah yang tertata,<br>untuk hari yang lebih baik”<br><span style="font-style:normal;color:#f07d94">♥</span></div>
+    </div>
 </section>
-<section id="stock" class="screen"><div class="tabs" id="stockTabs"></div><div class="stock-summary"><div class="ss-low" data-stockstatus="low" style="cursor:pointer"><b id="ssLow">0</b><small>Hampir Habis</small></div><div class="ss-thin" data-stockstatus="out" style="cursor:pointer"><b id="ssThin">0</b><small>Habis</small></div><div class="ss-safe" data-stockstatus="safe" style="cursor:pointer"><b id="ssSafe">0</b><small>Aman</small></div></div><div class="toolbar"><span>Urutkan: <select id="stockSort"><option value="category">Kategori</option><option value="name">Nama</option><option value="low">Stok menipis</option><option value="expiry">Kedaluwarsa</option></select></span><span id="stockCount"></span></div><div class="stock-table"><div class="stock-head"><div>Nama Barang</div><div>Stok</div><div>Min.</div><div>Satuan</div><div>Exp</div><div>PAO</div><div>Status</div><div></div></div><div id="stockList"></div></div></section>
+<section id="stock" class="screen"><div class="tabs" id="stockTabs"></div><div class="stock-summary"><div class="ss-low" data-stockstatus="low" style="cursor:pointer"><b id="ssLow">0</b><small>Hampir Habis</small></div><div class="ss-thin" data-stockstatus="out" style="cursor:pointer"><b id="ssThin">0</b><small>Habis</small></div><div class="ss-safe" data-stockstatus="safe" style="cursor:pointer"><b id="ssSafe">0</b><small>Aman</small></div></div><div class="toolbar"><span>Urutkan: <select id="stockSort"><option value="category">Kategori</option><option value="name">Nama</option><option value="low">Stok menipis</option><option value="expiry">Kedaluwarsa</option></select></span><span id="stockCount"></span></div><div class="stock-search-wrap">
+          <div class="stock-search" id="stockSearchField">⌕ <span>Cari barang...</span></div>
+          <button class="stock-filter-btn" id="stockFilterVisual">☷</button>
+        </div>
+        <div class="stock-table"><div class="stock-head"><div>Nama Barang</div><div>Stok</div><div>Min.</div><div>Satuan</div><div>Exp</div><div>PAO</div><div>Status</div><div></div></div><div id="stockList"></div></div></section>
 <section id="shop" class="screen">
 <div class="toolbar"><span>Urutkan: <select id="shopSort"><option value="priority">Prioritas</option><option value="name">Nama</option><option value="category">Kategori</option></select></span></div>
 <div class="section-title"><span>Belum Dibeli</span><span id="shopPending"></span></div>
@@ -88,8 +341,9 @@
 <section id="history" class="screen"><div class="hist-tabs"><button id="histShopBtn" class="on">Riwayat Belanja</button><button id="histStockBtn">Riwayat Stok</button></div><div id="historyContent"></div></section>
 <section id="more" class="screen"><div class="summary-card"><div class="round">🏠</div><div class="grow"><b>Stok Rumah</b><small>Data tersimpan di perangkat ini</small></div></div><button class="secondary" style="width:100%;margin-top:12px" id="resetDemo">Reset ke Data Contoh</button></section>
 </main>
-<nav class="bottom"><button class="nav on" data-screen="home"><svg viewBox="0 0 24 24"><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/></svg><span>Beranda</span></button><button class="nav" data-screen="stock"><svg viewBox="0 0 24 24"><path d="m12 3 8 4-8 4-8-4z"/><path d="M4 7v10l8 4 8-4V7"/></svg><span>Stok</span></button><button class="nav" data-screen="shop"><svg viewBox="0 0 24 24"><path d="M3 4h2l2.4 10.5a2 2 0 0 0 2 1.5H18a2 2 0 0 0 2-1.6L21 8H6"/></svg><span>Belanja</span></button><button class="nav" data-screen="history"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Riwayat</span></button><button class="nav" data-screen="more"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span>Lainnya</span></button></nav></div><div class="overlay" id="overlay"><div class="sheet" id="sheet"></div></div><div id="toast"></div>
+<nav class="bottom"><button class="nav on" data-screen="home"><svg viewBox="0 0 24 24"><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/></svg><span>Beranda</span></button><button class="nav" data-screen="stock"><svg viewBox="0 0 24 24"><path d="m12 3 8 4-8 4-8-4z"/><path d="M4 7v10l8 4 8-4V7"/></svg><span>Stok</span></button><button class="nav" data-screen="shop"><svg viewBox="0 0 24 24"><path d="M3 4h2l2.4 10.5a2 2 0 0 0 2 1.5H18a2 2 0 0 0 2-1.6L21 8H6"/></svg><span>Belanja</span></button><button class="nav" data-screen="history"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Riwayat</span></button></nav></div><div class="overlay" id="overlay"><div class="sheet" id="sheet"></div></div><div id="toast"></div>
 <script>
+
 
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],KEY='stokrumah-v20-data';
@@ -128,6 +382,11 @@ function syncShopping(){
   });
   save();
 }
+function updateGreeting(){
+ const h=new Date().getHours();
+ const g=h<11?'Selamat Pagi':h<15?'Selamat Siang':h<19?'Selamat Sore':'Selamat Malam';
+ const hero=$('#home .hero h2'); if(hero) hero.textContent=g+', Ayah!';
+}
 function go(id){
   $$('.screen').forEach(x=>x.classList.toggle('active',x.id===id));
   $$('.nav').forEach(x=>x.classList.toggle('on',x.dataset.screen===id));
@@ -139,24 +398,44 @@ function go(id){
 }
 function render(){syncShopping();renderHome();renderStockTabs();renderStock();renderShop();renderHistory()}
 function renderHome(){
-  let low=data.items.filter(x=>status(x)==='low').length,out=data.items.filter(x=>status(x)==='out').length,exp=data.items.filter(x=>{let d=dayDiff(effExp(x));return d>=0&&d<=30}).length;
-  $('#lowText').textContent=`${low+out} barang hampir habis / habis`;$('#expiryText').textContent=`${exp} barang hampir kedaluwarsa`;
-  $('#catGrid').innerHTML=cats.map(c=>`<div class="cat" data-cat="${c}"><div class="ico">${icons[c]}</div><b>${c}</b></div>`).join('');
-  $$('[data-cat]').forEach(b=>b.onclick=()=>{stockFilter=b.dataset.cat;stockStatusFilter='all';expiryOnly=false;go('stock')});
+ const low=data.items.filter(x=>status(x)==='low').length,out=data.items.filter(x=>status(x)==='out').length;
+ const exp=data.items.filter(x=>{const d=dayDiff(effExp(x));return d>=0&&d<=30}).length;
+ const iconMap={Dapur:'🍲',Toilet:'🧴',Laundry:'🧺',Obat:'💊',Baby:'👶',Beauty:'💄'};
+ $('#lowText').textContent=`${low+out} barang perlu segera dibeli`;
+ $('#expiryText').textContent=`${exp} barang dalam 30 hari ke depan`;
+ $('#catGrid').innerHTML=cats.map(c=>`<div class="cat" data-cat="${esc(c)}"><div class="ico">${iconMap[c]||'◻︎'}</div><b>${esc(c)}</b></div>`).join('');
+ $$('#catGrid .cat').forEach(b=>b.onclick=()=>{stockFilter=b.dataset.cat;stockStatusFilter='all';expiryOnly=false;go('stock')});
+ updateGreeting();
 }
 function renderStockTabs(){
-  $('#stockTabs').innerHTML=['all',...cats].map(c=>`<button class="tab ${stockFilter===c?'on':''}" data-sf="${c}">${c==='all'?'Semua':c}</button>`).join('');
-  $$('[data-sf]').forEach(b=>b.onclick=()=>{stockFilter=b.dataset.sf;expiryOnly=false;renderStockTabs();renderStock()});
+ const iconMap={Dapur:'🍲',Toilet:'🧴',Laundry:'🧺',Obat:'💊',Baby:'👶',Beauty:'💄'};
+ $('#stockTabs').innerHTML=cats.map(c=>`<button class="tab ${stockFilter===c?'on':''}" data-sf="${esc(c)}"><div style="font-size:23px;margin-bottom:5px">${iconMap[c]||'◻︎'}</div>${esc(c)}</button>`).join('');
+ $$('#stockTabs .tab').forEach(b=>b.onclick=()=>{stockFilter=b.dataset.sf;expiryOnly=false;renderStockTabs();renderStock()});
 }
 function renderStock(){
-  let a=[...data.items];
-  if(stockFilter!=='all')a=a.filter(x=>x.category===stockFilter);if(stockStatusFilter!=='all')a=a.filter(x=>status(x)===stockStatusFilter);if(expiryOnly)a=a.filter(x=>{let d=dayDiff(effExp(x));return d>=0&&d<=30});if(searchTerm)a=a.filter(x=>x.name.toLowerCase().includes(searchTerm.toLowerCase()));
-  let so=$('#stockSort').value;a.sort((x,y)=>so==='name'?x.name.localeCompare(y.name):so==='low'?(x.qty-x.min)-(y.qty-y.min):so==='expiry'?effExp(x).localeCompare(effExp(y)):x.category.localeCompare(y.category));
-  $('#stockCount').textContent=`${a.length} barang`;let low=data.items.filter(x=>status(x)==='low').length,out=data.items.filter(x=>status(x)==='out').length,safe=data.items.filter(x=>status(x)==='safe').length;$('#ssLow').textContent=low;$('#ssThin').textContent=out;$('#ssSafe').textContent=safe;
-  $('#stockList').innerHTML=a.length?a.map(x=>{const st=status(x)==='safe'?'<span class="badge safe">Aman</span>':status(x)==='low'?'<span class="badge warn-b">Hampir Habis</span>':'<span class="badge danger-b">Habis</span>';return `<div class="stock-tr"><div class="name" data-stock="${x.id}">${esc(x.name)}</div><div class="cell">${x.qty}</div><div class="cell">${x.min}</div><div class="cell">${esc(x.unit)}</div><div class="cell">${x.expiry?fmt(x.expiry):'–'}</div><div class="cell">${paoCats.includes(x.category)&&x.pao?esc(x.pao):'–'}</div><div class="cell">${st}</div><div class="stock-actions"><button class="mini-edit cart-btn ${data.shopping.some(s=>s.stockId===x.id)?'in-cart':''}" data-cartstock="${x.id}" title="Tambah ke belanja" aria-label="Tambah ${esc(x.name)} ke belanja">🛒</button><button class="mini-trash" data-delstock="${x.id}" title="Hapus">🗑</button></div></div>`}).join(''):'<div class="empty">Belum ada barang.</div>';
-  $$('[data-stock]').forEach(e=>e.onclick=()=>openStockDetail(Number(e.dataset.stock)));
-  $$('[data-cartstock]').forEach(e=>e.onclick=ev=>{ev.preventDefault();ev.stopPropagation();addStockToShopping(Number(e.dataset.cartstock))});
-  $$('[data-delstock]').forEach(e=>e.onclick=ev=>{ev.preventDefault();ev.stopPropagation();deleteStock(Number(e.dataset.delstock))});
+ let a=[...data.items];
+ if(stockFilter!=='all')a=a.filter(x=>x.category===stockFilter);
+ if(stockStatusFilter!=='all')a=a.filter(x=>status(x)===stockStatusFilter);
+ if(expiryOnly)a=a.filter(x=>{let d=dayDiff(effExp(x));return d>=0&&d<=30});
+ if(searchTerm)a=a.filter(x=>x.name.toLowerCase().includes(searchTerm.toLowerCase()));
+ a.sort((x,y)=>x.name.localeCompare(y.name));
+ const iconMap={Dapur:'🍲',Toilet:'🧴',Laundry:'🧺',Obat:'💊',Baby:'👶',Beauty:'💄'};
+ $('#stockList').innerHTML=a.length?a.map(x=>{
+   const s=status(x);
+   const badge=s==='safe'?'<span class="badge safe">Aman</span>':s==='low'?'<span class="badge warn-b">Hampir Habis</span>':'<span class="badge danger-b">Habis</span>';
+   return `<div class="stock-tr">
+     <div class="stock-avatar">${iconMap[x.category]||'◻︎'}</div>
+     <div class="name" data-stock="${x.id}">${esc(x.name)}</div>
+     <div class="stock-meta">${x.qty} ${esc(x.unit)}</div>
+     <div class="stock-badge">${badge}</div>
+     <button class="stock-more" data-stock="${x.id}" aria-label="Detail">•••</button>
+     <div class="stock-actions">
+       <button class="cart-btn ${data.shopping.some(s=>s.stockId===x.id)?'in-cart':''}" data-cartstock="${x.id}" title="Tambah ke belanja">🛒</button>
+     </div>
+   </div>`;
+ }).join(''):'<div class="empty">Belum ada barang.</div>';
+ $$('[data-stock]').forEach(e=>e.onclick=()=>openStockDetail(Number(e.dataset.stock)));
+ $$('[data-cartstock]').forEach(e=>e.onclick=ev=>{ev.preventDefault();ev.stopPropagation();addStockToShopping(Number(e.dataset.cartstock))});
 }
 function renderShop(){
   let a=[...data.shopping];
@@ -286,13 +565,16 @@ $$('.nav').forEach(b=>b.onclick=()=>go(b.dataset.screen));
 $('#stockSort').onchange=renderStock;$('#shopSort').onchange=renderShop;
 $('#histShopBtn').onclick=()=>{histMode='shop';$('#histShopBtn').classList.add('on');$('#histStockBtn').classList.remove('on');renderHistory()};$('#histStockBtn').onclick=()=>{histMode='stock';$('#histStockBtn').classList.add('on');$('#histShopBtn').classList.remove('on');renderHistory()};
 $('#goLow').onclick=()=>{stockStatusFilter='low';expiryOnly=false;go('stock')};$('#goExpiry').onclick=()=>{expiryOnly=true;stockFilter='all';stockStatusFilter='all';go('stock')};
-$('#overlay').onclick=e=>{if(e.target.id==='overlay')closeOverlay()};$('#searchBtn').onclick=()=>{let v=prompt('Cari barang:',searchTerm);if(v!==null){searchTerm=v;render()}};$('#filterBtn').onclick=()=>alert('Gunakan kategori, status, dan Urutkan untuk memfilter stok.');
+$('#overlay').onclick=e=>{if(e.target.id==='overlay')closeOverlay()};$('#searchBtn').onclick=()=>{let v=prompt('Cari barang:',searchTerm);if(v!==null){searchTerm=v;render()}};$('#stockSearchField').onclick=()=>{let v=prompt('Cari barang:',searchTerm||'');if(v!==null){searchTerm=v.trim();renderStock()}};
+$('#stockFilterVisual').onclick=()=>toast('Pilih kategori di atas untuk memfilter');
+$('#filterBtn').onclick=()=>alert('Gunakan kategori, status, dan Urutkan untuk memfilter stok.');
 $('#resetDemo').onclick=()=>{if(confirm('Reset ke data contoh?')){data=cloneDemo();save();render()}};
 $$('[data-stockstatus]').forEach(b=>b.onclick=()=>{stockStatusFilter=stockStatusFilter===b.dataset.stockstatus?'all':b.dataset.stockstatus;expiryOnly=false;renderStock()});
 $('#plusBtn').onclick=()=>{const active=document.querySelector('.screen.active')?.id;if(active==='stock')openStockForm();else if(active==='shop')addShop()};$('#saveShoppingBtn').onclick=saveAllShopping;
 $('#todayText').textContent=new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-stockFilter='all';stockStatusFilter='all';expiryOnly=false;searchTerm='';go('home');
+stockFilter='all';stockStatusFilter='all';expiryOnly=false;searchTerm='';go('home');updateGreeting();
 if('serviceWorker'in navigator)addEventListener('load',async()=>{try{const r=await navigator.serviceWorker.register('./service-worker.js?v=fixed');r.update()}catch(e){console.warn('Service worker:',e)}});
+
 
 
 
