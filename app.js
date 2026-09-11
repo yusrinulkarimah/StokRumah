@@ -38,7 +38,7 @@ function go(id){
 function render(){syncShopping();renderHome();renderStockTabs();renderStock();renderShop();renderHistory()}
 function renderHome(){
   let low=data.items.filter(x=>status(x)==='low').length,out=data.items.filter(x=>status(x)==='out').length,exp=data.items.filter(x=>{let d=dayDiff(effExp(x));return d>=0&&d<=30}).length;
-  $('#mTotal').textContent=data.items.length;$('#mLow').textContent=low;$('#mOut').textContent=out;$('#lowText').textContent=`${low+out} barang hampir habis / habis`;$('#expiryText').textContent=`${exp} barang hampir kedaluwarsa`;
+  $('#lowText').textContent=`${low+out} barang hampir habis / habis`;$('#expiryText').textContent=`${exp} barang hampir kedaluwarsa`;
   $('#catGrid').innerHTML=cats.map(c=>`<div class="cat" data-cat="${c}"><div class="ico">${icons[c]}</div><b>${c}</b></div>`).join('');
   $$('[data-cat]').forEach(b=>b.onclick=()=>{stockFilter=b.dataset.cat;stockStatusFilter='all';expiryOnly=false;go('stock')});
 }
