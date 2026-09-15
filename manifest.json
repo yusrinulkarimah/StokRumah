@@ -1,10 +1,10 @@
 {
   "name": "Stok Rumah",
   "short_name": "Stok Rumah",
-  "start_url": "./?fixed=1",
+  "start_url": "./?scanstruk=1",
   "display": "standalone",
-  "background_color": "#f6fbff",
-  "theme_color": "#f6fbff",
+  "background_color": "#f2efff",
+  "theme_color": "#f2efff",
   "icons": [
     {
       "src": "icon.svg",
