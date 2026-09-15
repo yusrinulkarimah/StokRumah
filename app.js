@@ -22,7 +22,8 @@ data.items=Array.isArray(data.items)?data.items:[];data.shopping=Array.isArray(d
 data.items.forEach(x=>{if(x.category==='Baby Kids')x.category='Baby'});
 data.shopping.forEach(x=>{if(x.category==='Baby Kids')x.category='Baby';if(typeof x.checked!=='boolean')x.checked=false;if(!Number.isFinite(Number(x.qty)))x.qty=1;if(!Number.isFinite(Number(x.price)))x.price=0});
 let stockFilter='all',stockStatusFilter='all',histMode='shop',expiryOnly=false,searchTerm='';
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){console.error(e)}},uid=()=>Date.now()+Math.floor(Math.random()*100000);
+function pruneHistory(){const cutoff=Date.now()-(183*24*60*60*1000);data.shopHistory=(data.shopHistory||[]).filter(h=>!h.date||new Date(h.date).getTime()>=cutoff);data.stockHistory=(data.stockHistory||[]).filter(h=>!h.date||new Date(h.date).getTime()>=cutoff)}
+const save=()=>{pruneHistory();try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){console.error(e)}},uid=()=>Date.now()+Math.floor(Math.random()*100000);
 const esc=(v='')=>String(v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 function toast(msg){const t=$('#toast');if(!t)return;t.textContent=msg;t.classList.add('show');clearTimeout(window.__toastTimer);window.__toastTimer=setTimeout(()=>t.classList.remove('show'),1700)}
 function status(x){return +x.qty<=0?'out':+x.qty<=+x.min?'low':'safe'}
@@ -48,7 +49,8 @@ function updateGreeting(){
 }
 function go(id){
   $$('.screen').forEach(x=>x.classList.toggle('active',x.id===id));
-  $$('.nav').forEach(x=>x.classList.toggle('on',x.dataset.screen===id));
+  $('#stockSearchInput').oninput=e=>{searchTerm=e.target.value;renderStock()};$('#stockFilterBtn').onclick=openUnifiedStockFilter;pruneHistory();
+$$('.nav').forEach(x=>x.classList.toggle('on',x.dataset.screen===id));
   $('#pageTitle').textContent={home:'Beranda',stock:'Stok',shop:'Belanja',history:'Riwayat',more:'Lainnya'}[id]||'Beranda';
   $('#searchBtn').style.display=['stock','shop'].includes(id)?'grid':'none';
   $('#plusBtn').style.display=['stock','shop'].includes(id)?'grid':'none';
@@ -57,11 +59,11 @@ function go(id){
 }
 function render(){syncShopping();renderHome();renderStockTabs();renderStock();renderShop();renderHistory()}
 function renderHome(){
- const low=data.items.filter(x=>status(x)==='low').length,out=data.items.filter(x=>status(x)==='out').length;
+ const urgent=data.items.filter(x=>status(x)==='low'||status(x)==='out').length;
  const exp=data.items.filter(x=>{const d=dayDiff(effExp(x));return d>=0&&d<=30}).length;
  const iconMap={Dapur:'🍲',Toilet:'🧴',Laundry:'🧺',Obat:'💊',Baby:'👶',Beauty:'💄'};
- $('#lowText').textContent=`${low+out} barang perlu segera dibeli`;
- $('#expiryText').textContent=`${exp} barang dalam 30 hari ke depan`;
+ $('#lowText').textContent=`${urgent} barang segera habis`;
+ $('#expiryText').textContent=`${exp} barang hampir kedaluwarsa`;
  $('#catGrid').innerHTML=cats.map(c=>`<div class="cat" data-cat="${esc(c)}"><div class="ico">${iconMap[c]||'◻︎'}</div><b>${esc(c)}</b></div>`).join('');
  $$('#catGrid .cat').forEach(b=>b.onclick=()=>{stockFilter=b.dataset.cat;stockStatusFilter='all';expiryOnly=false;go('stock')});
  updateGreeting();
@@ -72,12 +74,18 @@ function renderStockTabs(){
  $('#stockTabs').innerHTML=all.map(c=>`<button class="tab ${stockFilter===c?'on':''}" data-sf="${esc(c)}"><div>${c==='all'?'▦':(iconMap[c]||'◻︎')}</div>${c==='all'?'Semua':esc(c)}</button>`).join('');
  $$('#stockTabs .tab').forEach(b=>b.onclick=()=>{stockFilter=b.dataset.sf;expiryOnly=false;renderStockTabs();renderStock()});
 }
+function normSearch(v){return String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim()}
+function openUnifiedStockFilter(){
+ const ic={Dapur:'🍲',Toilet:'🧴',Laundry:'🧺',Obat:'💊',Baby:'👶',Beauty:'💄'};
+ openOverlay(`<div class="sheet-head"><div><h2>Filter Stok</h2><div class="muted">Kategori dan kondisi barang</div></div><button class="close" id="closeUF">✕</button></div><div class="field"><label>Kategori</label><div class="filter-options">${['all',...cats].map(c=>`<button class="filter-option ${stockFilter===c?'on':''}" data-fcat="${esc(c)}"><span class="fi">${c==='all'?'▦':ic[c]}</span>${c==='all'?'Semua Barang':esc(c)}</button>`).join('')}</div></div><div class="field"><label>Kondisi</label><div class="filter-options"><button class="filter-option ${stockStatusFilter==='all'?'on':''}" data-fstat="all"><span class="fi">◎</span>Semua Kondisi</button><button class="filter-option ${stockStatusFilter==='low'?'on':''}" data-fstat="low"><span class="fi">◔</span>Hampir Habis</button><button class="filter-option ${stockStatusFilter==='out'?'on':''}" data-fstat="out"><span class="fi">○</span>Habis</button><button class="filter-option ${stockStatusFilter==='safe'?'on':''}" data-fstat="safe"><span class="fi">✓</span>Aman</button></div></div>`);
+ $('#closeUF').onclick=closeOverlay;$$('[data-fcat]').forEach(b=>b.onclick=()=>{stockFilter=b.dataset.fcat;closeOverlay();renderStock()});$$('[data-fstat]').forEach(b=>b.onclick=()=>{stockStatusFilter=b.dataset.fstat;closeOverlay();renderStock()});
+}
 function renderStock(){
  let a=[...data.items];
  if(stockFilter!=='all')a=a.filter(x=>x.category===stockFilter);
  if(stockStatusFilter!=='all')a=a.filter(x=>status(x)===stockStatusFilter);
  if(expiryOnly)a=a.filter(x=>{let d=dayDiff(effExp(x));return d>=0&&d<=30});
- if(searchTerm)a=a.filter(x=>x.name.toLowerCase().includes(searchTerm.toLowerCase()));
+ if(searchTerm){const q=normSearch(searchTerm);a=a.filter(x=>normSearch(x.name).includes(q)||normSearch(x.category).includes(q)||normSearch(x.location||'').includes(q)||normSearch(x.note||'').includes(q));}
  a.sort((x,y)=>x.category.localeCompare(y.category)||x.name.localeCompare(y.name));
 
  const low=data.items.filter(x=>status(x)==='low').length;
@@ -109,7 +117,7 @@ function renderStock(){
 }
 function renderShop(){
   let a=[...data.shopping];
-  if(searchTerm)a=a.filter(x=>x.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  if(searchTerm){const q=normSearch(searchTerm);a=a.filter(x=>normSearch(x.name).includes(q)||normSearch(x.category).includes(q)||normSearch(x.location||'').includes(q)||normSearch(x.note||'').includes(q));}
   let so=$('#shopSort').value,p={Tinggi:0,Sedang:1,Rendah:2};
   a.sort((x,y)=>so==='name'?x.name.localeCompare(y.name):so==='category'?x.category.localeCompare(y.category):(p[x.priority]??9)-(p[y.priority]??9));
   $('#shopPending').textContent=`${a.length} item`;
@@ -219,138 +227,6 @@ function addStockToShopping(id){
   }
 }
 function openShopEdit(id){let x=data.shopping.find(i=>i.id===id);if(!x)return;openOverlay(`<div class="sheet-head"><h2>Edit Belanja</h2><button class="close" id="closeShopEdit">✕</button></div><div class="form-grid"><div class="field"><label>Nama Barang</label><input id="sName" value="${esc(x.name)}"></div><div class="field"><label>Kategori</label><select id="sCat">${cats.map(v=>`<option ${v===x.category?'selected':''}>${v}</option>`).join('')}</select></div><div class="two"><div class="field"><label>Jumlah</label><input id="sQty" type="number" inputmode="decimal" step="any" value="${x.qty}"></div><div class="field"><label>Satuan</label><select id="sUnit">${units.map(v=>`<option ${v===x.unit?'selected':''}>${v}</option>`).join('')}</select></div></div><div class="field"><label>Harga (opsional)</label><input id="sPrice" type="number" inputmode="numeric" min="0" step="100" value="${x.price||''}" placeholder="Contoh: 25000"></div><div class="field"><label>Kedaluwarsa</label><input id="sExp" type="date" value="${x.expiry||''}"></div><div class="field"><label>Catatan</label><textarea id="sNote">${esc(x.note||'')}</textarea></div></div><div class="actions"><button class="primary" id="saveShop">Simpan Perubahan</button><button class="danger" id="delShop">Hapus dari Daftar Belanja</button></div>`);$('#closeShopEdit').onclick=closeOverlay;$('#saveShop').onclick=()=>{Object.assign(x,{name:$('#sName').value.trim(),category:$('#sCat').value,qty:+$('#sQty').value||0,unit:$('#sUnit').value,price:+$('#sPrice').value||0,expiry:$('#sExp').value,note:$('#sNote').value,checked:!!x.checked});save();closeOverlay();render()};$('#delShop').onclick=()=>deleteShop(id)}
-
-function openAddShoppingChoice(){
- openOverlay(`<div class="sheet-head"><div><h2>Tambah ke Daftar Belanja</h2><div class="muted">Pilih cara menambahkan barang</div></div><button class="close" id="closeAddChoice">✕</button></div>
- <div class="choice-grid">
-  <button class="choice-card" id="chooseManual"><span class="choice-icon">✎</span><span><b>Tambah Manual</b><small>Input barang satu per satu</small></span></button>
-  <button class="choice-card" id="chooseReceipt"><span class="choice-icon">▣</span><span><b>Scan Struk Belanja</b><small>Foto struk dan baca otomatis</small></span></button>
- </div>`);
- $('#closeAddChoice').onclick=closeOverlay;
- $('#chooseManual').onclick=()=>{closeOverlay();addShop()};
- $('#chooseReceipt').onclick=openReceiptPicker;
-}
-function openReceiptPicker(){
- openOverlay(`<div class="sheet-head"><div><h2>Scan Struk Belanja</h2><div class="muted">Ambil foto struk atau pilih dari galeri</div></div><button class="close" id="closeReceipt">✕</button></div>
- <div class="scan-drop"><div class="scan-icon">▤</div><b>Foto atau pilih struk belanja</b><div class="scan-sub">Pastikan tulisan terlihat jelas dan tidak terpotong</div></div>
- <input id="receiptFile" type="file" accept="image/*" capture="environment" class="hidden">
- <div class="actions"><button class="primary" id="takeReceipt">📷 Ambil / Pilih Foto Struk</button><button class="secondary" id="cancelReceipt">Batal</button></div>`);
- $('#closeReceipt').onclick=$('#cancelReceipt').onclick=closeOverlay;
- $('#takeReceipt').onclick=()=>$('#receiptFile').click();
- $('#receiptFile').onchange=e=>{const f=e.target.files?.[0];if(f)scanReceiptFile(f)};
-}
-async function scanReceiptFile(file){
- const url=URL.createObjectURL(file);
- openOverlay(`<div class="sheet-head"><div><h2>Membaca Struk Belanja</h2><div class="muted">OCR diproses langsung di browser</div></div></div>
- <img class="scan-preview" src="${url}" alt="Foto struk">
- <div style="text-align:center;font-weight:800;margin-top:8px">Membaca struk belanja…</div>
- <div class="ocr-progress"><div id="ocrBar"></div></div>
- <div id="ocrStatus" class="scan-sub" style="text-align:center">Menyiapkan OCR…</div>
- <div class="scan-note">Proses pertama membutuhkan internet untuk memuat mesin OCR. Foto struk diproses di perangkat/browser.</div>`);
- try{
-   if(!window.Tesseract)throw new Error('Mesin OCR belum berhasil dimuat. Pastikan internet aktif.');
-   const result=await Tesseract.recognize(file,'eng',{logger:m=>{
-     if(m.progress!=null){const pc=Math.round(m.progress*100);if($('#ocrBar'))$('#ocrBar').style.width=pc+'%';if($('#ocrStatus'))$('#ocrStatus').textContent=(m.status||'Memproses')+' · '+pc+'%'}
-   }});
-   URL.revokeObjectURL(url);
-   const parsed=parseReceiptText(result.data.text||'');
-   openScannedItems(parsed.items,parsed.place);
- }catch(err){
-   URL.revokeObjectURL(url);
-   openOverlay(`<div class="sheet-head"><h2>Struk belum terbaca</h2><button class="close" id="closeOcrError">✕</button></div><div class="scan-note">${esc(err.message||'OCR gagal membaca struk.')}</div><div class="actions"><button class="primary" id="retryReceipt">Coba Foto Lain</button></div>`);
-   $('#closeOcrError').onclick=closeOverlay;$('#retryReceipt').onclick=openReceiptPicker;
- }
-}
-function parseMoney(v){
- let s=String(v||'').replace(/[^\d.,]/g,'').replace(/[.,](?=\d{3}(?:\D|$))/g,'').replace(/[.,]/g,'');
- return Number(s)||0;
-}
-function titleCaseReceipt(s){return s.toLowerCase().replace(/\b\w/g,c=>c.toUpperCase())}
-function parseReceiptText(text){
- const raw=text.split(/\r?\n/).map(s=>s.replace(/\s+/g,' ').trim()).filter(Boolean);
- let place='';
- for(const line of raw.slice(0,7)){
-   if(!/\b(total|subtotal|cash|tunai|change|kembali|receipt|struk|telp|phone|alamat|jl\.?)\b/i.test(line)&&/[A-Za-z]{3}/.test(line)){place=titleCaseReceipt(line.replace(/[^A-Za-z0-9 .&'-]/g,''));break}
- }
- const ignore=/\b(total|subtotal|ppn|pajak|tax|cash|tunai|debit|credit|kartu|change|kembali|diskon|discount|hemat|terima kasih|thank|tanggal|date|time|waktu|kasir|receipt|struk|member|saldo|bayar|payment|grand)\b/i;
- const items=[];
- for(const line0 of raw){
-   const line=line0.replace(/\s{2,}/g,' ').trim();
-   if(ignore.test(line))continue;
-   let m=line.match(/^(.{2,}?)\s+(?:(\d+(?:[.,]\d+)?)\s*[xX*@]\s*)?(?:Rp\s*)?(\d[\d.,]{2,})$/i);
-   if(!m)continue;
-   let name=m[1].replace(/^[\d\s.*-]+/,'').replace(/\s+(pcs|pc|kg|g|gr|ml|l|ltr|pack|box|botol|btl)\s*$/i,'').trim();
-   if(name.length<2||!/[\p{L}]/u.test(name))continue;
-   let qty=Number(String(m[2]||1).replace(',','.'))||1;
-   let amount=parseMoney(m[3]);
-   if(amount<100)continue;
-   items.push({id:uid(),name:titleCaseReceipt(name),qty,unit:'pcs',price:qty>1?Math.round(amount/qty):amount,checked:true});
- }
- if(!items.length){
-   raw.forEach((line,i)=>{
-     if(ignore.test(line)||i===0)return;
-     const prices=[...line.matchAll(/(?:Rp\s*)?(\d[\d.,]{2,})/gi)];
-     if(!prices.length)return;
-     const last=prices[prices.length-1];const amount=parseMoney(last[1]);
-     let name=line.slice(0,last.index).replace(/[\d\s.*xX@-]+$/,'').trim();
-     if(name.length>2&&amount>=100&&/[\p{L}]/u.test(name))items.push({id:uid(),name:titleCaseReceipt(name),qty:1,unit:'pcs',price:amount,checked:true});
-   });
- }
- return {place,items:items.slice(0,40)};
-}
-function openScannedItems(items,place=''){
- if(!items.length)items=[{id:uid(),name:'Item Struk',qty:1,unit:'pcs',price:0,checked:true}];
- window.__scanItems=items;
- openOverlay(`<div class="sheet-head"><div><h2>Hasil Scan Struk</h2><div class="muted">Periksa dan edit sebelum disimpan</div></div><button class="close" id="closeScanResult">✕</button></div>
- <div id="scanTempList" class="scan-temp"></div>
- <div class="field"><label>Belanja melalui apa?</label><input id="scanPlace" type="text" value="${esc(place)}" placeholder="Contoh: Superindo, Shopee, Pasar"></div>
- <div class="scan-total"><span>Total barang terpilih</span><b id="scanGrandTotal">Rp 0</b></div>
- <div class="actions"><button class="primary" id="saveScannedShopping">Simpan Belanja</button><button class="secondary" id="backToReceipt">Scan Ulang</button></div>`);
- $('#closeScanResult').onclick=closeOverlay;$('#backToReceipt').onclick=openReceiptPicker;
- renderScannedItems();
- $('#saveScannedShopping').onclick=saveScannedShopping;
-}
-function renderScannedItems(){
- const a=window.__scanItems||[];
- $('#scanTempList').innerHTML=a.map((x,i)=>`<div class="scan-item">
-  <input type="checkbox" data-sc-check="${i}" ${x.checked?'checked':''}>
-  <div><input class="scan-name" data-sc-name="${i}" value="${esc(x.name)}"><div class="scan-sub">${esc(x.unit||'pcs')}</div></div>
-  <input class="scan-qty" type="number" inputmode="decimal" min="0" step="any" data-sc-qty="${i}" value="${x.qty}">
-  <input class="scan-price" type="number" inputmode="numeric" pattern="[0-9]*" min="0" step="100" data-sc-price="${i}" value="${x.price||''}" placeholder="Harga">
- </div>`).join('');
- const sync=()=>{
-   $$('[data-sc-check]').forEach(e=>a[+e.dataset.scCheck].checked=e.checked);
-   $$('[data-sc-name]').forEach(e=>a[+e.dataset.scName].name=e.value.trim());
-   $$('[data-sc-qty]').forEach(e=>a[+e.dataset.scQty].qty=Number(e.value)||0);
-   $$('[data-sc-price]').forEach(e=>a[+e.dataset.scPrice].price=Number(e.value)||0);
-   const total=a.filter(x=>x.checked).reduce((t,x)=>t+(Number(x.qty)||0)*(Number(x.price)||0),0);
-   $('#scanGrandTotal').textContent='Rp '+total.toLocaleString('id-ID');
- };
- $$('[data-sc-check],[data-sc-name],[data-sc-qty],[data-sc-price]').forEach(e=>{e.oninput=sync;e.onchange=sync});sync();
-}
-function saveScannedShopping(){
- const a=(window.__scanItems||[]).filter(x=>x.checked&&x.name&&Number(x.qty)>0);
- const place=($('#scanPlace')?.value||'').trim();
- if(!a.length)return alert('Centang minimal satu barang yang akan disimpan.');
- if(!place)return alert('Silakan isi belanja melalui apa.');
- const purchaseTime=new Date().toISOString(),batchId='purchase-'+Date.now();
- for(const x of a){
-   let st=data.items.find(i=>i.name.toLowerCase()===x.name.toLowerCase());
-   if(st){
-     st.qty=Number((Number(st.qty)+(Number(x.qty)||0)).toFixed(3));
-     data.stockHistory.push({id:uid(),name:st.name,type:'in',qty:Number(x.qty)||0,unit:st.unit,date:purchaseTime});
-   }else{
-     st={id:uid(),name:x.name,category:'Dapur',qty:Number(x.qty)||0,min:0,unit:x.unit||'pcs',expiry:'',location:'',note:'',opened:'',pao:''};
-     data.items.push(st);
-     data.stockHistory.push({id:uid(),name:st.name,type:'in',qty:st.qty,unit:st.unit,date:purchaseTime});
-   }
-   data.shopHistory.push({id:uid(),batchId,name:x.name,category:st.category,qty:x.qty,unit:st.unit,price:x.price||0,purchasePlace:place,date:purchaseTime});
- }
- save();render();
- openOverlay(`<div class="scan-success"><div class="ok">✓</div><h2>Belanja Berhasil Disimpan!</h2><p>${a.length} barang telah ditambahkan ke stok<br>dan masuk ke Riwayat Belanja.</p><div class="actions"><button class="primary" id="viewScanHistory">Lihat Riwayat Belanja</button><button class="secondary" id="backScanShop">Kembali ke Belanja</button></div></div>`);
- $('#viewScanHistory').onclick=()=>{closeOverlay();histMode='shop';go('history');$('#histShopBtn').classList.add('on');$('#histStockBtn').classList.remove('on');renderHistory()};
- $('#backScanShop').onclick=()=>{closeOverlay();go('shop')};
-}
 function addShop(){let x={id:uid(),stockId:null,name:'Item Baru',category:'Dapur',qty:1,unit:'pcs',price:0,priority:'Sedang',expiry:'',note:'',checked:false};data.shopping.push(x);save();render();openShopEdit(x.id)}
 function deleteShop(id){let x=data.shopping.find(i=>i.id===id);if(!x)return;if(confirm(`Hapus ${x.name} dari daftar belanja?`)){if(x.stockId&&!data.dismissedShopping.includes(x.stockId))data.dismissedShopping.push(x.stockId);data.shopping=data.shopping.filter(i=>i.id!==id);save();closeOverlay();render()}}
 function saveAllShopping(){
@@ -425,7 +301,7 @@ $('#stockFilterVisual').onclick=()=>toast('Pilih kategori di atas untuk memfilte
 $('#filterBtn').onclick=()=>alert('Gunakan kategori, status, dan Urutkan untuk memfilter stok.');
 $('#resetDemo').onclick=()=>{if(confirm('Reset ke data contoh?')){data=cloneDemo();save();render()}};
 $$('[data-stockstatus]').forEach(b=>b.onclick=()=>{stockStatusFilter=stockStatusFilter===b.dataset.stockstatus?'all':b.dataset.stockstatus;expiryOnly=false;renderStock()});
-$('#plusBtn').onclick=()=>{const active=document.querySelector('.screen.active')?.id;if(active==='stock')openStockForm();else if(active==='shop')openAddShoppingChoice()};$('#saveShoppingBtn').onclick=saveAllShopping;
+$('#plusBtn').onclick=()=>{const active=document.querySelector('.screen.active')?.id;if(active==='stock')openStockForm();else if(active==='shop')addShop()};$('#saveShoppingBtn').onclick=saveAllShopping;
 $('#todayText').textContent=new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 stockFilter='all';stockStatusFilter='all';expiryOnly=false;searchTerm='';go('home');updateGreeting();
 if('serviceWorker'in navigator)addEventListener('load',async()=>{try{const r=await navigator.serviceWorker.register('./service-worker.js?v=fixed');r.update()}catch(e){console.warn('Service worker:',e)}});
