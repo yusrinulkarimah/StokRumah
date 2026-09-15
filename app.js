@@ -5,6 +5,7 @@
 
 
 
+
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],KEY='stokrumah-v20-data';
 const cats=['Dapur','Toilet','Laundry','Obat','Baby','Beauty'],units=['pcs','pack','box','botol','pouch','tube','strip','tablet','kapsul','sachet','gram','kg','ml','L','kaleng'],paoCats=['Beauty','Baby','Obat'],icons={
 Dapur:`<svg viewBox='0 0 24 24'><path d='M5 10h14v7a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3z'/><path d='M8 10V7m4 3V5m4 5V7'/></svg>`,
@@ -49,7 +50,7 @@ function updateGreeting(){
 }
 function go(id){
   $$('.screen').forEach(x=>x.classList.toggle('active',x.id===id));
-  $('#stockSearchInput').oninput=e=>{searchTerm=e.target.value;renderStock()};$('#stockFilterBtn').onclick=openUnifiedStockFilter;pruneHistory();
+  $('#stockSearchInput').oninput=e=>{searchTerm=e.target.value;renderStock()};pruneHistory();
 $$('.nav').forEach(x=>x.classList.toggle('on',x.dataset.screen===id));
   $('#pageTitle').textContent={home:'Beranda',stock:'Stok',shop:'Belanja',history:'Riwayat',more:'Lainnya'}[id]||'Beranda';
   $('#searchBtn').style.display=['stock','shop'].includes(id)?'grid':'none';
@@ -76,9 +77,9 @@ function renderStockTabs(){
 }
 function normSearch(v){return String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim()}
 function openUnifiedStockFilter(){
- const ic={Dapur:'🍲',Toilet:'🧴',Laundry:'🧺',Obat:'💊',Baby:'👶',Beauty:'💄'};
- openOverlay(`<div class="sheet-head"><div><h2>Filter Stok</h2><div class="muted">Kategori dan kondisi barang</div></div><button class="close" id="closeUF">✕</button></div><div class="field"><label>Kategori</label><div class="filter-options">${['all',...cats].map(c=>`<button class="filter-option ${stockFilter===c?'on':''}" data-fcat="${esc(c)}"><span class="fi">${c==='all'?'▦':ic[c]}</span>${c==='all'?'Semua Barang':esc(c)}</button>`).join('')}</div></div><div class="field"><label>Kondisi</label><div class="filter-options"><button class="filter-option ${stockStatusFilter==='all'?'on':''}" data-fstat="all"><span class="fi">◎</span>Semua Kondisi</button><button class="filter-option ${stockStatusFilter==='low'?'on':''}" data-fstat="low"><span class="fi">◔</span>Hampir Habis</button><button class="filter-option ${stockStatusFilter==='out'?'on':''}" data-fstat="out"><span class="fi">○</span>Habis</button><button class="filter-option ${stockStatusFilter==='safe'?'on':''}" data-fstat="safe"><span class="fi">✓</span>Aman</button></div></div>`);
- $('#closeUF').onclick=closeOverlay;$$('[data-fcat]').forEach(b=>b.onclick=()=>{stockFilter=b.dataset.fcat;closeOverlay();renderStock()});$$('[data-fstat]').forEach(b=>b.onclick=()=>{stockStatusFilter=b.dataset.fstat;closeOverlay();renderStock()});
+ openOverlay(`<div class="sheet-head"><div><h2>Filter Stok</h2><div class="muted">Pilih kondisi barang</div></div><button class="close" id="closeUF">✕</button></div><div class="field"><label>Kondisi Stok</label><div class="filter-options"><button class="filter-option ${stockStatusFilter==='all'&&!expiryOnly?'on':''}" data-cond="all"><span class="fi">◎</span>Semua Kondisi</button><button class="filter-option ${stockStatusFilter==='safe'&&!expiryOnly?'on':''}" data-cond="safe"><span class="fi">✓</span>Aman</button><button class="filter-option ${stockStatusFilter==='low'&&!expiryOnly?'on':''}" data-cond="low"><span class="fi">◔</span>Hampir Habis</button><button class="filter-option ${stockStatusFilter==='out'&&!expiryOnly?'on':''}" data-cond="out"><span class="fi">○</span>Habis</button><button class="filter-option ${expiryOnly?'on':''}" data-cond="expiry"><span class="fi">⌛</span>Hampir Expired</button></div></div>`);
+ $('#closeUF').onclick=closeOverlay;
+ $$('[data-cond]').forEach(b=>b.onclick=()=>{const v=b.dataset.cond;if(v==='expiry'){expiryOnly=true;stockStatusFilter='all'}else{expiryOnly=false;stockStatusFilter=v}closeOverlay();renderStock()});
 }
 function renderStock(){
  let a=[...data.items];
@@ -298,13 +299,14 @@ $('#histShopBtn').onclick=()=>{histMode='shop';$('#histShopBtn').classList.add('
 $('#goLow').onclick=()=>{stockStatusFilter='low';expiryOnly=false;go('stock')};$('#goExpiry').onclick=()=>{expiryOnly=true;stockFilter='all';stockStatusFilter='all';go('stock')};
 $('#overlay').onclick=e=>{if(e.target.id==='overlay')closeOverlay()};$('#searchBtn').onclick=()=>{let v=prompt('Cari barang:',searchTerm);if(v!==null){searchTerm=v;render()}};$('#stockSearchField').onclick=()=>{let v=prompt('Cari barang:',searchTerm||'');if(v!==null){searchTerm=v.trim();renderStock()}};
 $('#stockFilterVisual').onclick=()=>toast('Pilih kategori di atas untuk memfilter');
-$('#filterBtn').onclick=()=>alert('Gunakan kategori, status, dan Urutkan untuk memfilter stok.');
+$('#filterBtn').onclick=openUnifiedStockFilter;
 $('#resetDemo').onclick=()=>{if(confirm('Reset ke data contoh?')){data=cloneDemo();save();render()}};
 $$('[data-stockstatus]').forEach(b=>b.onclick=()=>{stockStatusFilter=stockStatusFilter===b.dataset.stockstatus?'all':b.dataset.stockstatus;expiryOnly=false;renderStock()});
 $('#plusBtn').onclick=()=>{const active=document.querySelector('.screen.active')?.id;if(active==='stock')openStockForm();else if(active==='shop')addShop()};$('#saveShoppingBtn').onclick=saveAllShopping;
 $('#todayText').textContent=new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 stockFilter='all';stockStatusFilter='all';expiryOnly=false;searchTerm='';go('home');updateGreeting();
 if('serviceWorker'in navigator)addEventListener('load',async()=>{try{const r=await navigator.serviceWorker.register('./service-worker.js?v=fixed');r.update()}catch(e){console.warn('Service worker:',e)}});
+
 
 
 
