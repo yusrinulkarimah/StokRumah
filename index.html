@@ -1090,7 +1090,8 @@ body{
   #stock .stock-head,
   #stock .stock-tr{min-width:760px!important}
 }
-</style></head>
+</style><link rel="apple-touch-icon" href="icon-192.png">
+</head>
 <body>
 
 <div id="authGate" class="sr-auth-gate">
@@ -1131,7 +1132,7 @@ body{
 <section id="home" class="screen active">
 <div class="hero welcome-card">
   <div class="welcome-copy">
-    <h2>Halo, Ibu 👋</h2>
+    <h2 id="welcomeGreeting">Halo, Ibu 👋</h2>
     <small id="todayText"></small>
     <p>Stok terkontrol,<br>rumah lebih nyaman ♡</p>
   </div>
@@ -1203,6 +1204,7 @@ body{
 
 
 
+
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],KEY='stokrumah-v20-data';
 const cats=['Dapur','Toilet','Laundry','Obat','Baby','Beauty'],units=['pcs','pack','box','botol','pouch','tube','strip','tablet','kapsul','sachet','gram','kg','ml','L','kaleng'],paoCats=['Beauty','Baby','Obat'],icons={
 Dapur:`<svg viewBox='0 0 24 24'><path d='M5 10h14v7a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3z'/><path d='M8 10V7m4 3V5m4 5V7'/></svg>`,
@@ -1256,7 +1258,7 @@ async function srRefreshSession(){
   const old=srGetSession();if(!old?.refresh_token)throw new Error('Sesi login tidak ditemukan');
   const d=await srAuthRequest('token?grant_type=refresh_token',{refresh_token:old.refresh_token});
   const s={access_token:d.access_token,refresh_token:d.refresh_token,user:d.user,expires_at:Date.now()+Number(d.expires_in||3600)*1000};
-  srSaveSession(s);srCurrentUser=s.user||null;return s;
+  srSaveSession(s);srCurrentUser=s.user||null;srUpdateGreeting();return s;
 }
 async function srActiveSession(){
   let s=srGetSession();if(!s?.access_token)throw new Error('Sesi login tidak ditemukan');
@@ -1353,6 +1355,14 @@ function srStartPolling(){
   if(window.__srPoll)clearInterval(window.__srPoll);
   window.__srPoll=setInterval(()=>{if(!document.hidden)srPoll()},3000);
 }
+
+function srUpdateGreeting(){
+  const el=document.getElementById('welcomeGreeting');
+  if(!el)return;
+  const email=(srCurrentUser?.email||'').trim().toLowerCase();
+  el.textContent=email==='zuaimrusydi19@gmail.com'?'Halo, Ayah 👋':'Halo, Ibu 👋';
+}
+
 async function srLogin(){
   const email=document.getElementById('srLoginEmail').value.trim(),password=document.getElementById('srLoginPassword').value;
   const btn=document.getElementById('srLoginBtn'),msg=document.getElementById('srLoginMsg');msg.textContent='';
@@ -1370,7 +1380,7 @@ async function srLogin(){
 }
 async function srLogout(){
   if(window.__srPoll)clearInterval(window.__srPoll);
-  srClearSession();srCurrentUser=null;srBaseline=null;srDirty=false;localStorage.removeItem(SR_DIRTY_KEY);
+  srClearSession();srCurrentUser=null;srUpdateGreeting();srBaseline=null;srDirty=false;localStorage.removeItem(SR_DIRTY_KEY);
   document.getElementById('srAccountMenu').classList.remove('show');
   document.getElementById('srAccountPill').style.display='none';
   document.getElementById('authGate').classList.remove('hidden');
@@ -1381,7 +1391,7 @@ async function srInitRealtime(){
   try{
     let s=srGetSession();if(!s?.access_token){gate.classList.remove('hidden');return}
     if(!s.expires_at||Date.now()>s.expires_at-60000)s=await srRefreshSession();
-    srCurrentUser=s.user||null;gate.classList.add('hidden');
+    srCurrentUser=s.user||null;srUpdateGreeting();gate.classList.add('hidden');
     document.getElementById('srAccountEmail').textContent=srCurrentUser?.email||'';
     srStatus('Mengambil data...','busy','Memuat stok keluarga');
     if(srDirty){srBaseline=srClone(srState());await srFlush()}
@@ -1596,6 +1606,7 @@ document.addEventListener('click',e=>{const m=document.getElementById('srAccount
 document.addEventListener('DOMContentLoaded',srInitRealtime);
 
 if('serviceWorker'in navigator)addEventListener('load',async()=>{try{const r=await navigator.serviceWorker.register('./service-worker.js?v=fixed');r.update()}catch(e){console.warn('Service worker:',e)}});
+
 
 
 
