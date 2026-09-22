@@ -1037,6 +1037,59 @@ body{
   .welcome-card h2{font-size:24px!important}
   .welcome-card p{font-size:13.5px!important}
 }
+
+/* ===== Stock horizontal scroll fix — structure/functions preserved ===== */
+#stock{
+  overflow:visible!important;
+  min-width:0!important;
+}
+#stock .stock-table{
+  display:block!important;
+  width:100%!important;
+  max-width:100%!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  -webkit-overflow-scrolling:touch!important;
+  overscroll-behavior-x:contain!important;
+  touch-action:pan-x pan-y!important;
+  border-radius:20px!important;
+  position:relative!important;
+  scrollbar-width:thin;
+}
+#stock .stock-table::-webkit-scrollbar{height:5px}
+#stock .stock-table::-webkit-scrollbar-thumb{background:#cfc5ef;border-radius:999px}
+#stock .stock-table::-webkit-scrollbar-track{background:transparent}
+#stock .stock-head,
+#stock .stock-tr{
+  width:max-content!important;
+  min-width:760px!important;
+  box-sizing:border-box!important;
+  grid-template-columns:160px 62px 62px 78px 105px 72px 110px 82px!important;
+}
+#stock .stock-head > *,
+#stock .stock-tr > *{
+  min-width:0!important;
+  white-space:nowrap!important;
+}
+#stock .stock-tr .name{
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+#stock .stock-table:after{
+  content:"Geser ke samping untuk melihat kolom lainnya →";
+  position:sticky;
+  left:0;
+  display:block;
+  width:max-content;
+  margin:7px 10px 8px;
+  font-size:11.5px;
+  color:#8a82a7;
+  pointer-events:none;
+}
+@media(max-width:430px){
+  #stock .stock-head,
+  #stock .stock-tr{min-width:760px!important}
+}
 </style></head>
 <body>
 
