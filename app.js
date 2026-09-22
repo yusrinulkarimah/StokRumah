@@ -2,6 +2,7 @@
 
 
 
+
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],KEY='stokrumah-v20-data';
 const cats=['Dapur','Toilet','Laundry','Obat','Baby','Beauty'],units=['pcs','pack','box','botol','pouch','tube','strip','tablet','kapsul','sachet','gram','kg','ml','L','kaleng'],paoCats=['Beauty','Baby','Obat'],icons={
 Dapur:`<svg viewBox='0 0 24 24'><path d='M5 10h14v7a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3z'/><path d='M8 10V7m4 3V5m4 5V7'/></svg>`,
@@ -20,7 +21,179 @@ data.items.forEach(x=>{if(x.category==='Baby Kids')x.category='Baby'});
 data.shopping.forEach(x=>{if(x.category==='Baby Kids')x.category='Baby';if(typeof x.checked!=='boolean')x.checked=false;if(!Number.isFinite(Number(x.qty)))x.qty=1;if(!Number.isFinite(Number(x.price)))x.price=0});
 let stockFilter='all',stockStatusFilter='all',histMode='shop',expiryOnly=false,searchTerm='';
 function pruneHistory(){const cutoff=Date.now()-183*24*60*60*1000;data.shopHistory=(data.shopHistory||[]).filter(h=>!h.date||new Date(h.date).getTime()>=cutoff);data.stockHistory=(data.stockHistory||[]).filter(h=>!h.date||new Date(h.date).getTime()>=cutoff)}
-const save=()=>{pruneHistory();try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){console.error(e)}},uid=()=>Date.now()+Math.floor(Math.random()*100000);
+
+const SUPABASE_URL="https://uduxugyvvqmxbzznqdmu.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY="sb_publishable_9kz1C-zW9Eefsfj1ZsZn5Q_djk9TdPs";
+const SR_SESSION_KEY='stokrumah_supabase_session';
+const SR_DIRTY_KEY='stokrumah_cloud_dirty';
+
+let srCurrentUser=null,srBaseline=null,srApplyingRemote=false,srDirty=localStorage.getItem(SR_DIRTY_KEY)==='1';
+let srSyncTimer=null,srSyncBusy=false,srSyncAgain=false,srLastError='';
+
+function srClone(v){return JSON.parse(JSON.stringify(v))}
+function srState(){return srClone(data)}
+function srNormalizeState(v){
+  const x=(v&&typeof v==='object')?srClone(v):{};
+  x.items=Array.isArray(x.items)?x.items:[];
+  x.shopping=Array.isArray(x.shopping)?x.shopping:[];
+  x.shopHistory=Array.isArray(x.shopHistory)?x.shopHistory:[];
+  x.stockHistory=Array.isArray(x.stockHistory)?x.stockHistory:[];
+  x.dismissedShopping=Array.isArray(x.dismissedShopping)?x.dismissedShopping:[];
+  x.items.forEach(i=>{if(i.category==='Baby Kids')i.category='Baby'});
+  x.shopping.forEach(i=>{if(i.category==='Baby Kids')i.category='Baby';if(typeof i.checked!=='boolean')i.checked=false});
+  return x;
+}
+function srGetSession(){try{return JSON.parse(localStorage.getItem(SR_SESSION_KEY)||'null')}catch(e){return null}}
+function srSaveSession(s){localStorage.setItem(SR_SESSION_KEY,JSON.stringify(s))}
+function srClearSession(){localStorage.removeItem(SR_SESSION_KEY)}
+async function srAuthRequest(path,body){
+  const res=await fetch(SUPABASE_URL+'/auth/v1/'+path,{method:'POST',cache:'no-store',headers:{apikey:SUPABASE_PUBLISHABLE_KEY,'Content-Type':'application/json'},body:JSON.stringify(body||{})});
+  const text=await res.text();let d=null;try{d=text?JSON.parse(text):null}catch(e){d=text}
+  if(!res.ok)throw new Error((d&&((d.msg)||(d.message)||(d.error_description)))||text||('HTTP '+res.status));
+  return d;
+}
+async function srRefreshSession(){
+  const old=srGetSession();if(!old?.refresh_token)throw new Error('Sesi login tidak ditemukan');
+  const d=await srAuthRequest('token?grant_type=refresh_token',{refresh_token:old.refresh_token});
+  const s={access_token:d.access_token,refresh_token:d.refresh_token,user:d.user,expires_at:Date.now()+Number(d.expires_in||3600)*1000};
+  srSaveSession(s);srCurrentUser=s.user||null;return s;
+}
+async function srActiveSession(){
+  let s=srGetSession();if(!s?.access_token)throw new Error('Sesi login tidak ditemukan');
+  if(!s.expires_at||Date.now()>s.expires_at-60000)s=await srRefreshSession();
+  srCurrentUser=s.user||null;return s;
+}
+async function srDb({method='GET',query='',body=null,prefer='return=representation'}={}){
+  let s=await srActiveSession();
+  const request=()=>fetch(SUPABASE_URL+'/rest/v1/stokrumah_entities'+query,{method,cache:'no-store',headers:{apikey:SUPABASE_PUBLISHABLE_KEY,Authorization:'Bearer '+s.access_token,'Content-Type':'application/json',Prefer:prefer},body:body===null?undefined:JSON.stringify(body)});
+  let res=await request();if(res.status===401){s=await srRefreshSession();res=await request()}
+  const text=await res.text();let d=null;try{d=text?JSON.parse(text):null}catch(e){d=text}
+  if(!res.ok)throw new Error((d&&d.message)||text||('Database '+res.status));return d;
+}
+function srStatus(text,type='busy',detail=''){
+  const pill=document.getElementById('srAccountPill'),dot=document.getElementById('srAccountDot'),status=document.getElementById('srAccountStatus');
+  const mdot=document.getElementById('srMenuDot'),mstatus=document.getElementById('srMenuStatus'),mdetail=document.getElementById('srMenuDetail');
+  if(srCurrentUser&&pill)pill.style.display='flex';
+  const color=type==='ok'?'#42b77a':type==='err'?'#df5968':'#e5a23c';
+  [dot,mdot].forEach(x=>{if(x)x.style.background=color});
+  if(status)status.textContent=text;if(mstatus)mstatus.textContent=text;if(mdetail)mdetail.textContent=detail||(type==='ok'?'Data keluarga sama di semua perangkat':srLastError||'Menghubungkan ke Supabase');
+}
+function srRows(state){
+  const rows=[];
+  const push=(type,arr)=>{(arr||[]).forEach(x=>rows.push({entity_type:type,entity_id:String(x.id),payload:x}))};
+  push('item',state.items);push('shopping',state.shopping);push('shop_history',state.shopHistory);push('stock_history',state.stockHistory);
+  rows.push({entity_type:'meta',entity_id:'dismissed',payload:{values:state.dismissedShopping||[]}});
+  return rows;
+}
+function srRowsMap(state){
+  const m=new Map();srRows(state).forEach(r=>m.set(r.entity_type+'|'+r.entity_id,r));return m;
+}
+function srRebuild(rows){
+  const s={items:[],shopping:[],shopHistory:[],stockHistory:[],dismissedShopping:[]};
+  (rows||[]).forEach(r=>{
+    const p=r.payload||{};
+    if(r.entity_type==='item')s.items.push(p);
+    else if(r.entity_type==='shopping')s.shopping.push(p);
+    else if(r.entity_type==='shop_history')s.shopHistory.push(p);
+    else if(r.entity_type==='stock_history')s.stockHistory.push(p);
+    else if(r.entity_type==='meta'&&r.entity_id==='dismissed')s.dismissedShopping=Array.isArray(p.values)?p.values:[];
+  });
+  return srNormalizeState(s);
+}
+function srDiff(oldState,newState){
+  const oldM=srRowsMap(oldState||{items:[],shopping:[],shopHistory:[],stockHistory:[],dismissedShopping:[]}),newM=srRowsMap(newState);
+  const up=[],del=[];
+  newM.forEach((r,k)=>{const o=oldM.get(k);if(!o||JSON.stringify(o.payload)!==JSON.stringify(r.payload))up.push(r)});
+  oldM.forEach((r,k)=>{if(!newM.has(k))del.push(r)});
+  return {up,del};
+}
+async function srUpsert(rows){
+  if(!rows.length)return;
+  const now=new Date().toISOString();
+  const body=rows.map(r=>({...r,updated_at:now,updated_by:srCurrentUser?.id||null}));
+  await srDb({method:'POST',query:'?on_conflict=entity_type,entity_id',body,prefer:'resolution=merge-duplicates,return=minimal'});
+}
+async function srDelete(rows){
+  for(const r of rows){
+    await srDb({method:'DELETE',query:'?entity_type=eq.'+encodeURIComponent(r.entity_type)+'&entity_id=eq.'+encodeURIComponent(r.entity_id),prefer:'return=minimal'});
+  }
+}
+function srMarkDirty(){
+  if(srApplyingRemote||!srCurrentUser)return;
+  srDirty=true;localStorage.setItem(SR_DIRTY_KEY,'1');srStatus('Menyimpan...','busy','Mengirim perubahan ke data keluarga');
+  clearTimeout(srSyncTimer);srSyncTimer=setTimeout(srFlush,450);
+}
+async function srFlush(){
+  if(!srCurrentUser||!srBaseline||srSyncBusy)return;
+  srSyncBusy=true;const captured=srState();
+  try{
+    const d=srDiff(srBaseline,captured);await srUpsert(d.up);await srDelete(d.del);
+    srBaseline=srClone(captured);srDirty=false;localStorage.removeItem(SR_DIRTY_KEY);srLastError='';srStatus('Tersinkron','ok');
+  }catch(e){
+    srLastError=e.message||String(e);srStatus('Gagal sinkron','err',srLastError);
+  }finally{
+    srSyncBusy=false;if(srSyncAgain){srSyncAgain=false;setTimeout(srFlush,250)}
+  }
+}
+async function srLoadCloud(){
+  const rows=await srDb({query:'?select=entity_type,entity_id,payload,updated_at&order=updated_at.asc'});
+  if(!rows||!rows.length){
+    srBaseline={items:[],shopping:[],shopHistory:[],stockHistory:[],dismissedShopping:[]};
+    srDirty=true;await srFlush();return;
+  }
+  const remote=srRebuild(rows);
+  srApplyingRemote=true;data=remote;pruneHistory();localStorage.setItem(KEY,JSON.stringify(data));render();srApplyingRemote=false;
+  srBaseline=srClone(remote);srDirty=false;localStorage.removeItem(SR_DIRTY_KEY);
+}
+async function srPoll(){
+  if(!srCurrentUser||srSyncBusy||srDirty)return;
+  try{await srLoadCloud();srStatus('Tersinkron','ok')}catch(e){srLastError=e.message||String(e);srStatus('Koneksi terputus','err',srLastError)}
+}
+function srStartPolling(){
+  if(window.__srPoll)clearInterval(window.__srPoll);
+  window.__srPoll=setInterval(()=>{if(!document.hidden)srPoll()},3000);
+}
+async function srLogin(){
+  const email=document.getElementById('srLoginEmail').value.trim(),password=document.getElementById('srLoginPassword').value;
+  const btn=document.getElementById('srLoginBtn'),msg=document.getElementById('srLoginMsg');msg.textContent='';
+  if(!email||!password){msg.textContent='Masukkan email dan password.';return}
+  btn.disabled=true;btn.textContent='Sedang masuk...';
+  try{
+    const d=await srAuthRequest('token?grant_type=password',{email,password});
+    const s={access_token:d.access_token,refresh_token:d.refresh_token,user:d.user,expires_at:Date.now()+Number(d.expires_in||3600)*1000};
+    srSaveSession(s);srCurrentUser=s.user||null;
+    document.getElementById('authGate').classList.add('hidden');
+    document.getElementById('srAccountEmail').textContent=srCurrentUser?.email||email;
+    srStatus('Mengambil data...','busy','Memuat stok keluarga');
+    await srLoadCloud();srStatus('Tersinkron','ok');srStartPolling();
+  }catch(e){msg.textContent='Login gagal: '+(e.message||'coba lagi.')}finally{btn.disabled=false;btn.textContent='Masuk ke Stok Rumah'}
+}
+async function srLogout(){
+  if(window.__srPoll)clearInterval(window.__srPoll);
+  srClearSession();srCurrentUser=null;srBaseline=null;srDirty=false;localStorage.removeItem(SR_DIRTY_KEY);
+  document.getElementById('srAccountMenu').classList.remove('show');
+  document.getElementById('srAccountPill').style.display='none';
+  document.getElementById('authGate').classList.remove('hidden');
+  document.getElementById('srLoginPassword').value='';
+}
+async function srInitRealtime(){
+  const gate=document.getElementById('authGate');
+  try{
+    let s=srGetSession();if(!s?.access_token){gate.classList.remove('hidden');return}
+    if(!s.expires_at||Date.now()>s.expires_at-60000)s=await srRefreshSession();
+    srCurrentUser=s.user||null;gate.classList.add('hidden');
+    document.getElementById('srAccountEmail').textContent=srCurrentUser?.email||'';
+    srStatus('Mengambil data...','busy','Memuat stok keluarga');
+    if(srDirty){srBaseline=srClone(srState());await srFlush()}
+    await srLoadCloud();srStatus('Tersinkron','ok');srStartPolling();
+  }catch(e){
+    srLastError=e.message||String(e);
+    if(/sesi login|refresh token|invalid/i.test(srLastError)){srClearSession();srCurrentUser=null;gate.classList.remove('hidden')}
+    else{gate.classList.add('hidden');srStatus('Koneksi bermasalah','err',srLastError);srStartPolling()}
+  }
+}
+
+const save=()=>{pruneHistory();try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){console.error(e)}srMarkDirty()},uid=()=>Date.now()+Math.floor(Math.random()*100000);
 const esc=(v='')=>String(v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 function toast(msg){const t=$('#toast');if(!t)return;t.textContent=msg;t.classList.add('show');clearTimeout(window.__toastTimer);window.__toastTimer=setTimeout(()=>t.classList.remove('show'),1700)}
 function status(x){return +x.qty<=0?'out':+x.qty<=+x.min?'low':'safe'}
@@ -213,7 +386,17 @@ $$('[data-stockstatus]').forEach(b=>b.onclick=()=>{stockStatusFilter=stockStatus
 $('#plusBtn').onclick=()=>{const active=document.querySelector('.screen.active')?.id;if(active==='stock')openStockForm();else if(active==='shop')addShop()};$('#saveShoppingBtn').onclick=saveAllShopping;
 $('#todayText').textContent=new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 stockFilter='all';stockStatusFilter='all';expiryOnly=false;searchTerm='';pruneHistory();go('home');
+
+document.getElementById('srLoginBtn').onclick=srLogin;
+document.getElementById('srLoginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')srLogin()});
+document.getElementById('srAccountPill').onclick=()=>document.getElementById('srAccountMenu').classList.toggle('show');
+document.getElementById('srSyncNow').onclick=async()=>{try{if(srDirty)await srFlush();await srLoadCloud();srStatus('Tersinkron','ok')}catch(e){srLastError=e.message||String(e);srStatus('Gagal sinkron','err',srLastError)}};
+document.getElementById('srLogoutBtn').onclick=srLogout;
+document.addEventListener('click',e=>{const m=document.getElementById('srAccountMenu'),p=document.getElementById('srAccountPill');if(m.classList.contains('show')&&!m.contains(e.target)&&!p.contains(e.target))m.classList.remove('show')});
+document.addEventListener('DOMContentLoaded',srInitRealtime);
+
 if('serviceWorker'in navigator)addEventListener('load',async()=>{try{const r=await navigator.serviceWorker.register('./service-worker.js?v=fixed');r.update()}catch(e){console.warn('Service worker:',e)}});
+
 
 
 
