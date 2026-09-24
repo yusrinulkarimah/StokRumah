@@ -4,6 +4,7 @@
 
 
 
+
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],KEY='stokrumah-v20-data';
 const cats=['Dapur','Toilet','Laundry','Obat','Baby','Beauty'],units=['pcs','pack','box','botol','pouch','tube','strip','tablet','kapsul','sachet','gram','kg','ml','L','kaleng'],paoCats=['Beauty','Baby','Obat'],icons={
 Dapur:`<svg viewBox='0 0 24 24'><path d='M5 10h14v7a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3z'/><path d='M8 10V7m4 3V5m4 5V7'/></svg>`,
@@ -21,7 +22,13 @@ data.items=Array.isArray(data.items)?data.items:[];data.shopping=Array.isArray(d
 data.items.forEach(x=>{if(x.category==='Baby Kids')x.category='Baby'});
 data.shopping.forEach(x=>{if(x.category==='Baby Kids')x.category='Baby';if(typeof x.checked!=='boolean')x.checked=false;if(!Number.isFinite(Number(x.qty)))x.qty=1;if(!Number.isFinite(Number(x.price)))x.price=0});
 let stockFilter='all',stockStatusFilter='all',histMode='shop',expiryOnly=false,searchTerm='';
-function pruneHistory(){const cutoff=Date.now()-183*24*60*60*1000;data.shopHistory=(data.shopHistory||[]).filter(h=>!h.date||new Date(h.date).getTime()>=cutoff);data.stockHistory=(data.stockHistory||[]).filter(h=>!h.date||new Date(h.date).getTime()>=cutoff)}
+function pruneHistory(){
+  const cutoff=new Date();
+  cutoff.setMonth(cutoff.getMonth()-6);
+  const limit=cutoff.getTime();
+  data.shopHistory=(data.shopHistory||[]).filter(h=>!h.date||new Date(h.date).getTime()>=limit);
+  data.stockHistory=(data.stockHistory||[]).filter(h=>!h.date||new Date(h.date).getTime()>=limit);
+}
 
 const SUPABASE_URL="https://uduxugyvvqmxbzznqdmu.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY="sb_publishable_9kz1C-zW9Eefsfj1ZsZn5Q_djk9TdPs";
@@ -159,7 +166,7 @@ function srUpdateGreeting(){
   const el=document.getElementById('welcomeGreeting');
   if(!el)return;
   const email=(srCurrentUser?.email||'').trim().toLowerCase();
-  el.textContent=email==='zuaimrusydi19@gmail.com'?'Halo, Ayah 👋':'Halo, Ibu 👋';
+  el.textContent=email==='zuaimrusydi19@gmail.com'?'Halo, Ayah! 👋':'Halo, Ibu! 👋';
 }
 
 async function srLogin(){
@@ -224,7 +231,7 @@ function syncShopping(){
 function go(id){
   $$('.screen').forEach(x=>x.classList.toggle('active',x.id===id));
   $$('.nav').forEach(x=>x.classList.toggle('on',x.dataset.screen===id));
-  $('#pageTitle').textContent={home:'Beranda',stock:'Stok',shop:'Belanja',history:'Riwayat',more:'Lainnya'}[id]||'Beranda';
+  $('#pageTitle').textContent={home:'Beranda',stock:'Stok',shop:'Belanja',history:'Riwayat'}[id]||'Beranda';
   $('#searchBtn').style.display=['stock','shop'].includes(id)?'grid':'none';
   $('#plusBtn').style.display=['stock','shop'].includes(id)?'grid':'none';
   $('#filterBtn').style.display=id==='stock'?'grid':'none';
@@ -269,67 +276,79 @@ function renderShop(){
 
   $('#shopList').innerHTML=a.length?a.map(x=>{
     const st=data.items.find(i=>i.id===x.stockId);
-    return `<div class="row shop-row ${x.checked?'checked':''}">
-      <input class="shop-check" type="checkbox" data-checkshop="${x.id}" ${x.checked?'checked':''} aria-label="Sudah dibeli">
-      <div class="shop-product" data-shop="${x.id}">
-        <div class="shop-product-name">${esc(x.name)}</div>
-        <div class="shop-tools">
-          <div class="qty-stepper">
-            <button type="button" data-decshop="${x.id}" aria-label="Kurangi jumlah">−</button>
-            <span>${Number(x.qty)||0}</span>
-            <button type="button" data-incshop="${x.id}" aria-label="Tambah jumlah">+</button>
-          </div>
-          <span class="shop-unit">${esc(x.unit)}</span>
-          <label class="price-edit" title="Harga per ${esc(x.unit)}"><span>Rp</span><input type="number" min="0" step="100" data-priceshop="${x.id}" value="${Number(x.price)||''}" placeholder="0"></label>
-        </div>
-        <div class="current-stock">${st?`Stok terkini ${st.qty} ${esc(st.unit)} · Minimum ${st.min} ${esc(st.unit)}`:'Belum ada di stok'}</div>
+    return `<div class="row shop-row compact-shop-row ${x.checked?'checked':''}">
+      <div class="compact-shop-name" data-shop="${x.id}" title="${esc(x.name)}">${esc(x.name)}</div>
+      <div class="compact-qty">
+        <button type="button" data-incshop="${x.id}" aria-label="Tambah jumlah">+</button>
+        <span>${Number(x.qty)||0}</span>
+        <button type="button" data-decshop="${x.id}" aria-label="Kurangi jumlah">−</button>
       </div>
-      <div class="row-actions"><span>›</span><button class="trash" data-delshop="${x.id}" aria-label="Hapus">🗑️</button></div>
+      <label class="compact-price" title="Harga per ${esc(x.unit)}"><span>Rp</span><input type="number" min="0" step="100" inputmode="numeric" data-priceshop="${x.id}" value="${Number(x.price)||''}" placeholder="0"></label>
+      <button class="compact-cart ${x.checked?'checked':''}" type="button" data-checkshop="${x.id}" aria-label="${x.checked?'Batalkan tanda dibeli':'Tandai sudah dibeli'}">🛒</button>
+      <div class="compact-stock">${st?`Stok ${st.qty} ${esc(st.unit)} · Min. ${st.min} ${esc(st.unit)}`:'Belum ada di stok'} · ${esc(x.unit)}</div>
     </div>`;
   }).join(''):'<div class="empty">Daftar belanja kosong.</div>';
 
   $$('[data-shop]').forEach(e=>e.onclick=()=>openShopEdit(Number(e.dataset.shop)));
-  $$('[data-checkshop]').forEach(e=>e.onchange=()=>{const x=data.shopping.find(i=>i.id===Number(e.dataset.checkshop));if(x){x.checked=e.checked;save();renderShop()}});
+  $$('[data-checkshop]').forEach(e=>e.onclick=ev=>{ev.preventDefault();ev.stopPropagation();const x=data.shopping.find(i=>i.id===Number(e.dataset.checkshop));if(x){x.checked=!x.checked;save();renderShop()}});
   $$('[data-incshop]').forEach(e=>e.onclick=ev=>{ev.preventDefault();ev.stopPropagation();const x=data.shopping.find(i=>i.id===Number(e.dataset.incshop));if(x){x.qty=Number((Number(x.qty||0)+1).toFixed(3));save();renderShop()}});
   $$('[data-decshop]').forEach(e=>e.onclick=ev=>{ev.preventDefault();ev.stopPropagation();const x=data.shopping.find(i=>i.id===Number(e.dataset.decshop));if(x){x.qty=Math.max(0,Number((Number(x.qty||0)-1).toFixed(3)));save();renderShop()}});
   $$('[data-priceshop]').forEach(e=>{
     e.onclick=ev=>ev.stopPropagation();
     e.oninput=()=>{const x=data.shopping.find(i=>i.id===Number(e.dataset.priceshop));if(x){x.price=Number(e.value)||0;save();const total=data.shopping.filter(i=>i.checked).reduce((t,i)=>t+(Number(i.price)||0)*(Number(i.qty)||0),0);$('#shopTotal').textContent='Rp '+total.toLocaleString('id-ID')}};
   });
-  $$('[data-delshop]').forEach(e=>e.onclick=ev=>{ev.preventDefault();ev.stopPropagation();deleteShop(Number(e.dataset.delshop))});
+}
+function historyShopGroupKey(h){
+  if(h.batchId)return 'batch:'+String(h.batchId);
+  const dt=new Date(h.date);
+  return `legacy:${dt.getFullYear()}-${dt.getMonth()}-${dt.getDate()}-${dt.getHours()}-${dt.getMinutes()}`;
+}
+function deleteShopHistoryGroup(key){
+  if(!confirm('Hapus riwayat belanja ini?'))return;
+  data.shopHistory=(data.shopHistory||[]).filter(h=>historyShopGroupKey(h)!==key);
+  save();renderHistory();
+}
+function deleteStockHistory(id){
+  if(!confirm('Hapus riwayat stok ini?'))return;
+  data.stockHistory=(data.stockHistory||[]).filter(h=>String(h.id)!==String(id));
+  save();renderHistory();
 }
 function renderHistory(){
- if(histMode==='shop'){
-   const groups=new Map();
-   (data.shopHistory||[]).forEach(h=>{
-     const dt=new Date(h.date);
-     const key=h.batchId||`legacy-${dt.getFullYear()}-${dt.getMonth()}-${dt.getDate()}-${dt.getHours()}-${dt.getMinutes()}`;
-     if(!groups.has(key))groups.set(key,{date:h.date,place:h.purchasePlace||'',items:[]});
-     const g=groups.get(key);g.items.push(h);
-     if(!g.place&&h.purchasePlace)g.place=h.purchasePlace;
-   });
-   const ordered=[...groups.values()].sort((a,b)=>new Date(b.date)-new Date(a.date));
-   $('#historyContent').innerHTML=ordered.length?ordered.map(g=>{
-     const d=new Date(g.date);
-     const date=d.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
-     const total=g.items.reduce((t,h)=>t+(Number(h.price)||0)*(Number(h.qty)||0),0);
-     return `<div class="safe-receipt">
-       <div class="safe-receipt-head">
-         <div class="safe-receipt-title"><b>${date}</b><small>${esc(g.place||'Tempat tidak dicatat')}</small></div>
-         <div class="safe-receipt-total"><small>Total Belanja</small><b>Rp ${total.toLocaleString('id-ID')}</b></div>
-       </div>
-       <div class="safe-receipt-items">
-         ${g.items.map(h=>{
-           const qty=Number(h.qty)||0, price=Number(h.price)||0, sub=qty*price;
-           return `<div class="safe-receipt-row"><b>${esc(h.name)}</b><span>${qty} ${esc(h.unit)}</span><span>Rp ${price.toLocaleString('id-ID')}</span><span class="subtotal">Rp ${sub.toLocaleString('id-ID')}</span></div>`;
-         }).join('')}
-       </div>
-     </div>`;
-   }).join(''):'<div class="empty">Belum ada riwayat belanja.</div>';
-   return;
- }
- const a=data.stockHistory;
- $('#historyContent').innerHTML=a.length?a.slice().reverse().map(h=>`<div class="hist-row"><div><b>${esc(h.name)}</b><small class="${h.type==='in'?'in':'out'}">${h.type==='in'?'Stok Masuk':'Stok Keluar'} ${h.type==='in'?'+':'-'}${h.qty} ${esc(h.unit)}</small></div><small>${new Date(h.date).toLocaleString('id-ID')}</small></div>`).join(''):'<div class="empty">Belum ada riwayat stok.</div>';
+  pruneHistory();
+  if(histMode==='shop'){
+    const groups=new Map();
+    (data.shopHistory||[]).forEach(h=>{
+      const key=historyShopGroupKey(h);
+      if(!groups.has(key))groups.set(key,{key,date:h.date,place:h.purchasePlace||'',items:[]});
+      const g=groups.get(key);g.items.push(h);
+      if(!g.place&&h.purchasePlace)g.place=h.purchasePlace;
+    });
+    const ordered=[...groups.values()].sort((a,b)=>new Date(b.date)-new Date(a.date));
+    $('#historyContent').innerHTML=ordered.length?ordered.map(g=>{
+      const d=new Date(g.date);
+      const date=d.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+      const total=g.items.reduce((t,h)=>t+(Number(h.price)||0)*(Number(h.qty)||0),0);
+      const safeKey=esc(g.key);
+      return `<div class="safe-receipt">
+        <div class="safe-receipt-head">
+          <div class="safe-receipt-title"><b>${date}</b><small>${esc(g.place||'Tempat tidak dicatat')}</small></div>
+          <div class="safe-receipt-total"><small>Total Belanja</small><b>Rp ${total.toLocaleString('id-ID')}</b></div>
+          <button class="history-delete" type="button" data-delhistshop="${safeKey}" aria-label="Hapus riwayat">×</button>
+        </div>
+        <div class="safe-receipt-items">
+          ${g.items.map(h=>{
+            const qty=Number(h.qty)||0,price=Number(h.price)||0,sub=qty*price;
+            return `<div class="safe-receipt-row"><b>${esc(h.name)}</b><span>${qty} ${esc(h.unit)}</span><span>Rp ${price.toLocaleString('id-ID')}</span><span class="subtotal">Rp ${sub.toLocaleString('id-ID')}</span></div>`;
+          }).join('')}
+        </div>
+      </div>`;
+    }).join(''):'<div class="empty">Belum ada riwayat belanja.</div>';
+    $$('[data-delhistshop]').forEach(b=>b.onclick=ev=>{ev.preventDefault();ev.stopPropagation();deleteShopHistoryGroup(b.dataset.delhistshop)});
+    return;
+  }
+  const a=data.stockHistory||[];
+  $('#historyContent').innerHTML=a.length?a.slice().reverse().map(h=>`<div class="hist-row history-with-delete"><div><b>${esc(h.name)}</b><small class="${h.type==='in'?'in':'out'}">${h.type==='in'?'Stok Masuk':'Stok Keluar'} ${h.type==='in'?'+':'-'}${h.qty} ${esc(h.unit)}</small></div><small>${new Date(h.date).toLocaleString('id-ID')}</small><button class="history-delete" type="button" data-delhiststock="${h.id}" aria-label="Hapus riwayat">×</button></div>`).join(''):'<div class="empty">Belum ada riwayat stok.</div>';
+  $$('[data-delhiststock]').forEach(b=>b.onclick=ev=>{ev.preventDefault();ev.stopPropagation();deleteStockHistory(b.dataset.delhiststock)});
 }
 function openOverlay(v){$('#sheet').innerHTML=v;$('#overlay').classList.add('on')}function closeOverlay(){$('#overlay').classList.remove('on')}
 function stockFields(x={}){let c=x.category||'Dapur';return `<div class="form-grid"><div class="field"><label>Nama Barang</label><input id="fName" value="${esc(x.name||'')}"></div><div class="field"><label>Kategori</label><select id="fCat">${cats.map(v=>`<option ${v===c?'selected':''}>${v}</option>`).join('')}</select></div><div class="two"><div class="field"><label>Jumlah Stok</label><input id="fQty" type="number" step="any" value="${x.qty??0}"></div><div class="field"><label>Jumlah Minimum</label><input id="fMin" type="number" step="any" value="${x.min??0}"></div></div><div class="field"><label>Satuan</label><select id="fUnit">${units.map(v=>`<option ${v===(x.unit||'pcs')?'selected':''}>${v}</option>`).join('')}</select></div><div class="field"><label>Lokasi</label><input id="fLoc" value="${esc(x.location||'')}"></div><div class="field"><label>Kedaluwarsa</label><input id="fExp" type="date" value="${x.expiry||''}"></div><div id="paoBox" class="${paoCats.includes(c)?'':'hidden'}"><div class="two"><div class="field"><label>Tanggal Dibuka</label><input id="fOpened" type="date" value="${x.opened||''}"></div><div class="field"><label>PAO</label><select id="fPao"><option value="">-</option>${['3M','6M','12M','18M','24M','36M'].map(v=>`<option ${v===x.pao?'selected':''}>${v}</option>`).join('')}</select></div></div></div><div class="field"><label>Keterangan</label><textarea id="fNote">${esc(x.note||'')}</textarea></div></div>`}
@@ -390,21 +409,35 @@ $('#stockSort').onchange=renderStock;$('#shopSort').onchange=renderShop;
 $('#histShopBtn').onclick=()=>{histMode='shop';$('#histShopBtn').classList.add('on');$('#histStockBtn').classList.remove('on');renderHistory()};$('#histStockBtn').onclick=()=>{histMode='stock';$('#histStockBtn').classList.add('on');$('#histShopBtn').classList.remove('on');renderHistory()};
 $('#goLow').onclick=()=>{stockStatusFilter='low';expiryOnly=false;go('stock')};$('#goExpiry').onclick=()=>{expiryOnly=true;stockFilter='all';stockStatusFilter='all';go('stock')};
 $('#overlay').onclick=e=>{if(e.target.id==='overlay')closeOverlay()};$('#searchBtn').onclick=()=>{let v=prompt('Cari barang:',searchTerm);if(v!==null){searchTerm=v;render()}};$('#filterBtn').onclick=openStockFilter;
-$('#resetDemo').onclick=()=>{if(confirm('Reset ke data contoh?')){data=cloneDemo();save();render()}};
 $$('[data-stockstatus]').forEach(b=>b.onclick=()=>{stockStatusFilter=stockStatusFilter===b.dataset.stockstatus?'all':b.dataset.stockstatus;expiryOnly=false;renderStock()});
 $('#plusBtn').onclick=()=>{const active=document.querySelector('.screen.active')?.id;if(active==='stock')openStockForm();else if(active==='shop')addShop()};$('#saveShoppingBtn').onclick=saveAllShopping;
 $('#todayText').textContent=new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 stockFilter='all';stockStatusFilter='all';expiryOnly=false;searchTerm='';pruneHistory();go('home');
 
+
+async function resetAllStokRumahData(){
+  if(!confirm('Reset seluruh isi Stok Rumah? Semua stok, daftar belanja, dan riwayat akan dihapus untuk semua user yang tersinkron.'))return;
+  data={items:[],shopping:[],shopHistory:[],stockHistory:[],dismissedShopping:[]};
+  save();
+  render();
+  try{
+    if(srCurrentUser){await srFlush();await srLoadCloud();srStatus('Tersinkron','ok','Seluruh data sudah direset')}
+  }catch(e){
+    srLastError=e.message||String(e);srStatus('Gagal reset','err',srLastError);
+  }
+}
+
 document.getElementById('srLoginBtn').onclick=srLogin;
 document.getElementById('srLoginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')srLogin()});
 document.getElementById('srAccountPill').onclick=()=>document.getElementById('srAccountMenu').classList.toggle('show');
 document.getElementById('srSyncNow').onclick=async()=>{try{if(srDirty)await srFlush();await srLoadCloud();srStatus('Tersinkron','ok')}catch(e){srLastError=e.message||String(e);srStatus('Gagal sinkron','err',srLastError)}};
+document.getElementById('srResetBtn').onclick=resetAllStokRumahData;
 document.getElementById('srLogoutBtn').onclick=srLogout;
 document.addEventListener('click',e=>{const m=document.getElementById('srAccountMenu'),p=document.getElementById('srAccountPill');if(m.classList.contains('show')&&!m.contains(e.target)&&!p.contains(e.target))m.classList.remove('show')});
 document.addEventListener('DOMContentLoaded',srInitRealtime);
 
 if('serviceWorker'in navigator)addEventListener('load',async()=>{try{const r=await navigator.serviceWorker.register('./service-worker.js?v=fixed');r.update()}catch(e){console.warn('Service worker:',e)}});
+
 
 
 

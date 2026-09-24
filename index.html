@@ -1090,6 +1090,189 @@ body{
   #stock .stock-head,
   #stock .stock-tr{min-width:760px!important}
 }
+
+/* ===== Requested UI refinements ===== */
+
+/* Beranda */
+#welcomeGreeting{
+  font-size:25px!important;
+}
+#todayText{
+  font-size:15px!important;
+  font-weight:650!important;
+  line-height:1.25!important;
+}
+
+/* Belanja — thin compact cards */
+#shopList{
+  display:flex!important;
+  flex-direction:column!important;
+  gap:5px!important;
+}
+#shopList .shop-row.compact-shop-row{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto auto auto!important;
+  grid-template-areas:
+    "name qty price cart"
+    "stock stock stock stock"!important;
+  align-items:center!important;
+  column-gap:7px!important;
+  row-gap:3px!important;
+  min-height:0!important;
+  padding:8px 9px!important;
+  margin:0!important;
+  border-radius:14px!important;
+  background:rgba(255,255,255,.96)!important;
+  box-shadow:0 3px 10px rgba(83,65,156,.055)!important;
+}
+#shopList .compact-shop-name{
+  grid-area:name!important;
+  min-width:0!important;
+  font-size:13.8px!important;
+  line-height:1.15!important;
+  font-weight:800!important;
+  color:#27304f!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+  cursor:pointer;
+}
+#shopList .compact-qty{
+  grid-area:qty!important;
+  display:flex!important;
+  align-items:center!important;
+  height:28px!important;
+  border:1px solid #e2dcef!important;
+  border-radius:9px!important;
+  overflow:hidden!important;
+  background:#faf8ff!important;
+}
+#shopList .compact-qty button{
+  width:25px!important;
+  height:27px!important;
+  min-height:27px!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  color:#614fba!important;
+  font-size:15px!important;
+  font-weight:800!important;
+}
+#shopList .compact-qty span{
+  min-width:25px!important;
+  text-align:center!important;
+  font-size:12.5px!important;
+  font-weight:800!important;
+  color:#373b5c!important;
+}
+#shopList .compact-price{
+  grid-area:price!important;
+  display:flex!important;
+  align-items:center!important;
+  height:28px!important;
+  min-width:83px!important;
+  max-width:94px!important;
+  padding:0 6px!important;
+  border:1px solid #e2dcef!important;
+  border-radius:9px!important;
+  background:#fff!important;
+  box-sizing:border-box!important;
+}
+#shopList .compact-price span{
+  font-size:11px!important;
+  color:#6f7590!important;
+  margin-right:2px!important;
+}
+#shopList .compact-price input{
+  width:100%!important;
+  min-width:0!important;
+  border:0!important;
+  outline:0!important;
+  background:transparent!important;
+  font-size:12.4px!important;
+  padding:0!important;
+  color:#313653!important;
+}
+#shopList .compact-cart{
+  grid-area:cart!important;
+  width:30px!important;
+  height:30px!important;
+  min-width:30px!important;
+  min-height:30px!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:9px!important;
+  display:grid!important;
+  place-items:center!important;
+  background:#eef4ff!important;
+  font-size:16px!important;
+  box-shadow:none!important;
+}
+#shopList .compact-cart.checked{
+  background:#e6f7ec!important;
+}
+#shopList .compact-stock{
+  grid-area:stock!important;
+  padding-top:1px!important;
+  font-size:11.2px!important;
+  line-height:1.15!important;
+  color:#8a8fa5!important;
+}
+@media(max-width:390px){
+  #shopList .shop-row.compact-shop-row{
+    grid-template-columns:minmax(0,1fr) auto 80px auto!important;
+    column-gap:5px!important;
+  }
+  #shopList .compact-shop-name{font-size:13.2px!important}
+  #shopList .compact-price{min-width:78px!important;max-width:80px!important}
+}
+
+/* History delete buttons */
+.history-delete{
+  width:27px!important;
+  height:27px!important;
+  min-width:27px!important;
+  min-height:27px!important;
+  padding:0!important;
+  display:grid!important;
+  place-items:center!important;
+  border:0!important;
+  border-radius:50%!important;
+  background:#fff0f2!important;
+  color:#c94e5e!important;
+  font-size:16px!important;
+  line-height:1!important;
+  font-weight:900!important;
+  box-shadow:none!important;
+}
+.safe-receipt-head{
+  grid-template-columns:minmax(0,1fr) auto 27px!important;
+  align-items:center!important;
+  gap:8px!important;
+}
+.hist-row.history-with-delete{
+  position:relative!important;
+  padding-right:47px!important;
+}
+.hist-row.history-with-delete .history-delete{
+  position:absolute!important;
+  top:50%!important;
+  right:10px!important;
+  transform:translateY(-50%)!important;
+}
+
+/* Reset moved into account menu */
+.sr-reset-btn{
+  width:100%;
+  margin-top:10px;
+  padding:11px;
+  border-radius:14px;
+  font-size:13px;
+  font-weight:800;
+  border:1px solid #ffd3da;
+  background:#fff6f7;
+  color:#ba4655;
+}
 </style><link rel="apple-touch-icon" href="icon-192.png">
 </head>
 <body>
@@ -1125,6 +1308,7 @@ body{
     <div><b id="srMenuStatus">Menghubungkan</b><small id="srMenuDetail">Menyiapkan sinkronisasi</small></div>
   </div>
   <button id="srSyncNow" class="sr-sync-btn" type="button">Sinkronkan sekarang</button>
+  <button id="srResetBtn" class="sr-reset-btn" type="button">Reset seluruh data</button>
   <button id="srLogoutBtn" class="sr-logout-btn" type="button">Keluar / Logout</button>
 </div>
 <div class="app"><header><div class="head"><h1 id="pageTitle">Beranda</h1><div class="head-icons"><button class="icon-btn" id="searchBtn" style="display:none"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.3-3.3"/></svg></button><button class="icon-btn" id="plusBtn" style="display:none"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button><button class="icon-btn" id="filterBtn" style="display:none"><svg viewBox="0 0 24 24"><path d="M4 5h16l-6 7v5l-4 2v-7z"/></svg></button></div></div></header>
@@ -1195,10 +1379,11 @@ body{
 <button class="add-wide" id="saveShoppingBtn">Simpan Belanja</button>
 </section>
 <section id="history" class="screen"><div class="hist-tabs"><button id="histShopBtn" class="on">Riwayat Belanja</button><button id="histStockBtn">Riwayat Stok</button></div><div id="historyContent"></div></section>
-<section id="more" class="screen"><div class="summary-card"><div class="round">🏠</div><div class="grow"><b>Stok Rumah</b><small>Data tersimpan di perangkat ini</small></div></div><button class="secondary" style="width:100%;margin-top:12px" id="resetDemo">Reset ke Data Contoh</button></section>
+
 </main>
-<nav class="bottom"><button class="nav on" data-screen="home"><svg viewBox="0 0 24 24"><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/></svg><span>Beranda</span></button><button class="nav" data-screen="stock"><svg viewBox="0 0 24 24"><path d="m12 3 8 4-8 4-8-4z"/><path d="M4 7v10l8 4 8-4V7"/></svg><span>Stok</span></button><button class="nav" data-screen="shop"><svg viewBox="0 0 24 24"><path d="M3 4h2l2.4 10.5a2 2 0 0 0 2 1.5H18a2 2 0 0 0 2-1.6L21 8H6"/></svg><span>Belanja</span></button><button class="nav" data-screen="history"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Riwayat</span></button><button class="nav" data-screen="more"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span>Lainnya</span></button></nav></div><div class="overlay" id="overlay"><div class="sheet" id="sheet"></div></div><div id="toast"></div>
+<nav class="bottom"><button class="nav on" data-screen="home"><svg viewBox="0 0 24 24"><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/></svg><span>Beranda</span></button><button class="nav" data-screen="stock"><svg viewBox="0 0 24 24"><path d="m12 3 8 4-8 4-8-4z"/><path d="M4 7v10l8 4 8-4V7"/></svg><span>Stok</span></button><button class="nav" data-screen="shop"><svg viewBox="0 0 24 24"><path d="M3 4h2l2.4 10.5a2 2 0 0 0 2 1.5H18a2 2 0 0 0 2-1.6L21 8H6"/></svg><span>Belanja</span></button><button class="nav" data-screen="history"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Riwayat</span></button></nav></div><div class="overlay" id="overlay"><div class="sheet" id="sheet"></div></div><div id="toast"></div>
 <script>
+
 
 
 
@@ -1222,7 +1407,13 @@ data.items=Array.isArray(data.items)?data.items:[];data.shopping=Array.isArray(d
 data.items.forEach(x=>{if(x.category==='Baby Kids')x.category='Baby'});
 data.shopping.forEach(x=>{if(x.category==='Baby Kids')x.category='Baby';if(typeof x.checked!=='boolean')x.checked=false;if(!Number.isFinite(Number(x.qty)))x.qty=1;if(!Number.isFinite(Number(x.price)))x.price=0});
 let stockFilter='all',stockStatusFilter='all',histMode='shop',expiryOnly=false,searchTerm='';
-function pruneHistory(){const cutoff=Date.now()-183*24*60*60*1000;data.shopHistory=(data.shopHistory||[]).filter(h=>!h.date||new Date(h.date).getTime()>=cutoff);data.stockHistory=(data.stockHistory||[]).filter(h=>!h.date||new Date(h.date).getTime()>=cutoff)}
+function pruneHistory(){
+  const cutoff=new Date();
+  cutoff.setMonth(cutoff.getMonth()-6);
+  const limit=cutoff.getTime();
+  data.shopHistory=(data.shopHistory||[]).filter(h=>!h.date||new Date(h.date).getTime()>=limit);
+  data.stockHistory=(data.stockHistory||[]).filter(h=>!h.date||new Date(h.date).getTime()>=limit);
+}
 
 const SUPABASE_URL="https://uduxugyvvqmxbzznqdmu.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY="sb_publishable_9kz1C-zW9Eefsfj1ZsZn5Q_djk9TdPs";
@@ -1360,7 +1551,7 @@ function srUpdateGreeting(){
   const el=document.getElementById('welcomeGreeting');
   if(!el)return;
   const email=(srCurrentUser?.email||'').trim().toLowerCase();
-  el.textContent=email==='zuaimrusydi19@gmail.com'?'Halo, Ayah 👋':'Halo, Ibu 👋';
+  el.textContent=email==='zuaimrusydi19@gmail.com'?'Halo, Ayah! 👋':'Halo, Ibu! 👋';
 }
 
 async function srLogin(){
@@ -1425,7 +1616,7 @@ function syncShopping(){
 function go(id){
   $$('.screen').forEach(x=>x.classList.toggle('active',x.id===id));
   $$('.nav').forEach(x=>x.classList.toggle('on',x.dataset.screen===id));
-  $('#pageTitle').textContent={home:'Beranda',stock:'Stok',shop:'Belanja',history:'Riwayat',more:'Lainnya'}[id]||'Beranda';
+  $('#pageTitle').textContent={home:'Beranda',stock:'Stok',shop:'Belanja',history:'Riwayat'}[id]||'Beranda';
   $('#searchBtn').style.display=['stock','shop'].includes(id)?'grid':'none';
   $('#plusBtn').style.display=['stock','shop'].includes(id)?'grid':'none';
   $('#filterBtn').style.display=id==='stock'?'grid':'none';
@@ -1470,67 +1661,79 @@ function renderShop(){
 
   $('#shopList').innerHTML=a.length?a.map(x=>{
     const st=data.items.find(i=>i.id===x.stockId);
-    return `<div class="row shop-row ${x.checked?'checked':''}">
-      <input class="shop-check" type="checkbox" data-checkshop="${x.id}" ${x.checked?'checked':''} aria-label="Sudah dibeli">
-      <div class="shop-product" data-shop="${x.id}">
-        <div class="shop-product-name">${esc(x.name)}</div>
-        <div class="shop-tools">
-          <div class="qty-stepper">
-            <button type="button" data-decshop="${x.id}" aria-label="Kurangi jumlah">−</button>
-            <span>${Number(x.qty)||0}</span>
-            <button type="button" data-incshop="${x.id}" aria-label="Tambah jumlah">+</button>
-          </div>
-          <span class="shop-unit">${esc(x.unit)}</span>
-          <label class="price-edit" title="Harga per ${esc(x.unit)}"><span>Rp</span><input type="number" min="0" step="100" data-priceshop="${x.id}" value="${Number(x.price)||''}" placeholder="0"></label>
-        </div>
-        <div class="current-stock">${st?`Stok terkini ${st.qty} ${esc(st.unit)} · Minimum ${st.min} ${esc(st.unit)}`:'Belum ada di stok'}</div>
+    return `<div class="row shop-row compact-shop-row ${x.checked?'checked':''}">
+      <div class="compact-shop-name" data-shop="${x.id}" title="${esc(x.name)}">${esc(x.name)}</div>
+      <div class="compact-qty">
+        <button type="button" data-incshop="${x.id}" aria-label="Tambah jumlah">+</button>
+        <span>${Number(x.qty)||0}</span>
+        <button type="button" data-decshop="${x.id}" aria-label="Kurangi jumlah">−</button>
       </div>
-      <div class="row-actions"><span>›</span><button class="trash" data-delshop="${x.id}" aria-label="Hapus">🗑️</button></div>
+      <label class="compact-price" title="Harga per ${esc(x.unit)}"><span>Rp</span><input type="number" min="0" step="100" inputmode="numeric" data-priceshop="${x.id}" value="${Number(x.price)||''}" placeholder="0"></label>
+      <button class="compact-cart ${x.checked?'checked':''}" type="button" data-checkshop="${x.id}" aria-label="${x.checked?'Batalkan tanda dibeli':'Tandai sudah dibeli'}">🛒</button>
+      <div class="compact-stock">${st?`Stok ${st.qty} ${esc(st.unit)} · Min. ${st.min} ${esc(st.unit)}`:'Belum ada di stok'} · ${esc(x.unit)}</div>
     </div>`;
   }).join(''):'<div class="empty">Daftar belanja kosong.</div>';
 
   $$('[data-shop]').forEach(e=>e.onclick=()=>openShopEdit(Number(e.dataset.shop)));
-  $$('[data-checkshop]').forEach(e=>e.onchange=()=>{const x=data.shopping.find(i=>i.id===Number(e.dataset.checkshop));if(x){x.checked=e.checked;save();renderShop()}});
+  $$('[data-checkshop]').forEach(e=>e.onclick=ev=>{ev.preventDefault();ev.stopPropagation();const x=data.shopping.find(i=>i.id===Number(e.dataset.checkshop));if(x){x.checked=!x.checked;save();renderShop()}});
   $$('[data-incshop]').forEach(e=>e.onclick=ev=>{ev.preventDefault();ev.stopPropagation();const x=data.shopping.find(i=>i.id===Number(e.dataset.incshop));if(x){x.qty=Number((Number(x.qty||0)+1).toFixed(3));save();renderShop()}});
   $$('[data-decshop]').forEach(e=>e.onclick=ev=>{ev.preventDefault();ev.stopPropagation();const x=data.shopping.find(i=>i.id===Number(e.dataset.decshop));if(x){x.qty=Math.max(0,Number((Number(x.qty||0)-1).toFixed(3)));save();renderShop()}});
   $$('[data-priceshop]').forEach(e=>{
     e.onclick=ev=>ev.stopPropagation();
     e.oninput=()=>{const x=data.shopping.find(i=>i.id===Number(e.dataset.priceshop));if(x){x.price=Number(e.value)||0;save();const total=data.shopping.filter(i=>i.checked).reduce((t,i)=>t+(Number(i.price)||0)*(Number(i.qty)||0),0);$('#shopTotal').textContent='Rp '+total.toLocaleString('id-ID')}};
   });
-  $$('[data-delshop]').forEach(e=>e.onclick=ev=>{ev.preventDefault();ev.stopPropagation();deleteShop(Number(e.dataset.delshop))});
+}
+function historyShopGroupKey(h){
+  if(h.batchId)return 'batch:'+String(h.batchId);
+  const dt=new Date(h.date);
+  return `legacy:${dt.getFullYear()}-${dt.getMonth()}-${dt.getDate()}-${dt.getHours()}-${dt.getMinutes()}`;
+}
+function deleteShopHistoryGroup(key){
+  if(!confirm('Hapus riwayat belanja ini?'))return;
+  data.shopHistory=(data.shopHistory||[]).filter(h=>historyShopGroupKey(h)!==key);
+  save();renderHistory();
+}
+function deleteStockHistory(id){
+  if(!confirm('Hapus riwayat stok ini?'))return;
+  data.stockHistory=(data.stockHistory||[]).filter(h=>String(h.id)!==String(id));
+  save();renderHistory();
 }
 function renderHistory(){
- if(histMode==='shop'){
-   const groups=new Map();
-   (data.shopHistory||[]).forEach(h=>{
-     const dt=new Date(h.date);
-     const key=h.batchId||`legacy-${dt.getFullYear()}-${dt.getMonth()}-${dt.getDate()}-${dt.getHours()}-${dt.getMinutes()}`;
-     if(!groups.has(key))groups.set(key,{date:h.date,place:h.purchasePlace||'',items:[]});
-     const g=groups.get(key);g.items.push(h);
-     if(!g.place&&h.purchasePlace)g.place=h.purchasePlace;
-   });
-   const ordered=[...groups.values()].sort((a,b)=>new Date(b.date)-new Date(a.date));
-   $('#historyContent').innerHTML=ordered.length?ordered.map(g=>{
-     const d=new Date(g.date);
-     const date=d.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
-     const total=g.items.reduce((t,h)=>t+(Number(h.price)||0)*(Number(h.qty)||0),0);
-     return `<div class="safe-receipt">
-       <div class="safe-receipt-head">
-         <div class="safe-receipt-title"><b>${date}</b><small>${esc(g.place||'Tempat tidak dicatat')}</small></div>
-         <div class="safe-receipt-total"><small>Total Belanja</small><b>Rp ${total.toLocaleString('id-ID')}</b></div>
-       </div>
-       <div class="safe-receipt-items">
-         ${g.items.map(h=>{
-           const qty=Number(h.qty)||0, price=Number(h.price)||0, sub=qty*price;
-           return `<div class="safe-receipt-row"><b>${esc(h.name)}</b><span>${qty} ${esc(h.unit)}</span><span>Rp ${price.toLocaleString('id-ID')}</span><span class="subtotal">Rp ${sub.toLocaleString('id-ID')}</span></div>`;
-         }).join('')}
-       </div>
-     </div>`;
-   }).join(''):'<div class="empty">Belum ada riwayat belanja.</div>';
-   return;
- }
- const a=data.stockHistory;
- $('#historyContent').innerHTML=a.length?a.slice().reverse().map(h=>`<div class="hist-row"><div><b>${esc(h.name)}</b><small class="${h.type==='in'?'in':'out'}">${h.type==='in'?'Stok Masuk':'Stok Keluar'} ${h.type==='in'?'+':'-'}${h.qty} ${esc(h.unit)}</small></div><small>${new Date(h.date).toLocaleString('id-ID')}</small></div>`).join(''):'<div class="empty">Belum ada riwayat stok.</div>';
+  pruneHistory();
+  if(histMode==='shop'){
+    const groups=new Map();
+    (data.shopHistory||[]).forEach(h=>{
+      const key=historyShopGroupKey(h);
+      if(!groups.has(key))groups.set(key,{key,date:h.date,place:h.purchasePlace||'',items:[]});
+      const g=groups.get(key);g.items.push(h);
+      if(!g.place&&h.purchasePlace)g.place=h.purchasePlace;
+    });
+    const ordered=[...groups.values()].sort((a,b)=>new Date(b.date)-new Date(a.date));
+    $('#historyContent').innerHTML=ordered.length?ordered.map(g=>{
+      const d=new Date(g.date);
+      const date=d.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+      const total=g.items.reduce((t,h)=>t+(Number(h.price)||0)*(Number(h.qty)||0),0);
+      const safeKey=esc(g.key);
+      return `<div class="safe-receipt">
+        <div class="safe-receipt-head">
+          <div class="safe-receipt-title"><b>${date}</b><small>${esc(g.place||'Tempat tidak dicatat')}</small></div>
+          <div class="safe-receipt-total"><small>Total Belanja</small><b>Rp ${total.toLocaleString('id-ID')}</b></div>
+          <button class="history-delete" type="button" data-delhistshop="${safeKey}" aria-label="Hapus riwayat">×</button>
+        </div>
+        <div class="safe-receipt-items">
+          ${g.items.map(h=>{
+            const qty=Number(h.qty)||0,price=Number(h.price)||0,sub=qty*price;
+            return `<div class="safe-receipt-row"><b>${esc(h.name)}</b><span>${qty} ${esc(h.unit)}</span><span>Rp ${price.toLocaleString('id-ID')}</span><span class="subtotal">Rp ${sub.toLocaleString('id-ID')}</span></div>`;
+          }).join('')}
+        </div>
+      </div>`;
+    }).join(''):'<div class="empty">Belum ada riwayat belanja.</div>';
+    $$('[data-delhistshop]').forEach(b=>b.onclick=ev=>{ev.preventDefault();ev.stopPropagation();deleteShopHistoryGroup(b.dataset.delhistshop)});
+    return;
+  }
+  const a=data.stockHistory||[];
+  $('#historyContent').innerHTML=a.length?a.slice().reverse().map(h=>`<div class="hist-row history-with-delete"><div><b>${esc(h.name)}</b><small class="${h.type==='in'?'in':'out'}">${h.type==='in'?'Stok Masuk':'Stok Keluar'} ${h.type==='in'?'+':'-'}${h.qty} ${esc(h.unit)}</small></div><small>${new Date(h.date).toLocaleString('id-ID')}</small><button class="history-delete" type="button" data-delhiststock="${h.id}" aria-label="Hapus riwayat">×</button></div>`).join(''):'<div class="empty">Belum ada riwayat stok.</div>';
+  $$('[data-delhiststock]').forEach(b=>b.onclick=ev=>{ev.preventDefault();ev.stopPropagation();deleteStockHistory(b.dataset.delhiststock)});
 }
 function openOverlay(v){$('#sheet').innerHTML=v;$('#overlay').classList.add('on')}function closeOverlay(){$('#overlay').classList.remove('on')}
 function stockFields(x={}){let c=x.category||'Dapur';return `<div class="form-grid"><div class="field"><label>Nama Barang</label><input id="fName" value="${esc(x.name||'')}"></div><div class="field"><label>Kategori</label><select id="fCat">${cats.map(v=>`<option ${v===c?'selected':''}>${v}</option>`).join('')}</select></div><div class="two"><div class="field"><label>Jumlah Stok</label><input id="fQty" type="number" step="any" value="${x.qty??0}"></div><div class="field"><label>Jumlah Minimum</label><input id="fMin" type="number" step="any" value="${x.min??0}"></div></div><div class="field"><label>Satuan</label><select id="fUnit">${units.map(v=>`<option ${v===(x.unit||'pcs')?'selected':''}>${v}</option>`).join('')}</select></div><div class="field"><label>Lokasi</label><input id="fLoc" value="${esc(x.location||'')}"></div><div class="field"><label>Kedaluwarsa</label><input id="fExp" type="date" value="${x.expiry||''}"></div><div id="paoBox" class="${paoCats.includes(c)?'':'hidden'}"><div class="two"><div class="field"><label>Tanggal Dibuka</label><input id="fOpened" type="date" value="${x.opened||''}"></div><div class="field"><label>PAO</label><select id="fPao"><option value="">-</option>${['3M','6M','12M','18M','24M','36M'].map(v=>`<option ${v===x.pao?'selected':''}>${v}</option>`).join('')}</select></div></div></div><div class="field"><label>Keterangan</label><textarea id="fNote">${esc(x.note||'')}</textarea></div></div>`}
@@ -1591,21 +1794,35 @@ $('#stockSort').onchange=renderStock;$('#shopSort').onchange=renderShop;
 $('#histShopBtn').onclick=()=>{histMode='shop';$('#histShopBtn').classList.add('on');$('#histStockBtn').classList.remove('on');renderHistory()};$('#histStockBtn').onclick=()=>{histMode='stock';$('#histStockBtn').classList.add('on');$('#histShopBtn').classList.remove('on');renderHistory()};
 $('#goLow').onclick=()=>{stockStatusFilter='low';expiryOnly=false;go('stock')};$('#goExpiry').onclick=()=>{expiryOnly=true;stockFilter='all';stockStatusFilter='all';go('stock')};
 $('#overlay').onclick=e=>{if(e.target.id==='overlay')closeOverlay()};$('#searchBtn').onclick=()=>{let v=prompt('Cari barang:',searchTerm);if(v!==null){searchTerm=v;render()}};$('#filterBtn').onclick=openStockFilter;
-$('#resetDemo').onclick=()=>{if(confirm('Reset ke data contoh?')){data=cloneDemo();save();render()}};
 $$('[data-stockstatus]').forEach(b=>b.onclick=()=>{stockStatusFilter=stockStatusFilter===b.dataset.stockstatus?'all':b.dataset.stockstatus;expiryOnly=false;renderStock()});
 $('#plusBtn').onclick=()=>{const active=document.querySelector('.screen.active')?.id;if(active==='stock')openStockForm();else if(active==='shop')addShop()};$('#saveShoppingBtn').onclick=saveAllShopping;
 $('#todayText').textContent=new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 stockFilter='all';stockStatusFilter='all';expiryOnly=false;searchTerm='';pruneHistory();go('home');
 
+
+async function resetAllStokRumahData(){
+  if(!confirm('Reset seluruh isi Stok Rumah? Semua stok, daftar belanja, dan riwayat akan dihapus untuk semua user yang tersinkron.'))return;
+  data={items:[],shopping:[],shopHistory:[],stockHistory:[],dismissedShopping:[]};
+  save();
+  render();
+  try{
+    if(srCurrentUser){await srFlush();await srLoadCloud();srStatus('Tersinkron','ok','Seluruh data sudah direset')}
+  }catch(e){
+    srLastError=e.message||String(e);srStatus('Gagal reset','err',srLastError);
+  }
+}
+
 document.getElementById('srLoginBtn').onclick=srLogin;
 document.getElementById('srLoginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')srLogin()});
 document.getElementById('srAccountPill').onclick=()=>document.getElementById('srAccountMenu').classList.toggle('show');
 document.getElementById('srSyncNow').onclick=async()=>{try{if(srDirty)await srFlush();await srLoadCloud();srStatus('Tersinkron','ok')}catch(e){srLastError=e.message||String(e);srStatus('Gagal sinkron','err',srLastError)}};
+document.getElementById('srResetBtn').onclick=resetAllStokRumahData;
 document.getElementById('srLogoutBtn').onclick=srLogout;
 document.addEventListener('click',e=>{const m=document.getElementById('srAccountMenu'),p=document.getElementById('srAccountPill');if(m.classList.contains('show')&&!m.contains(e.target)&&!p.contains(e.target))m.classList.remove('show')});
 document.addEventListener('DOMContentLoaded',srInitRealtime);
 
 if('serviceWorker'in navigator)addEventListener('load',async()=>{try{const r=await navigator.serviceWorker.register('./service-worker.js?v=fixed');r.update()}catch(e){console.warn('Service worker:',e)}});
+
 
 
 
