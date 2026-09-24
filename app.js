@@ -5,6 +5,8 @@
 
 
 
+
+
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],KEY='stokrumah-v20-data';
 const cats=['Dapur','Toilet','Laundry','Obat','Baby','Beauty'],units=['pcs','pack','box','botol','pouch','tube','strip','tablet','kapsul','sachet','gram','kg','ml','L','kaleng'],paoCats=['Beauty','Baby','Obat'],icons={
 Dapur:`<svg viewBox='0 0 24 24'><path d='M5 10h14v7a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3z'/><path d='M8 10V7m4 3V5m4 5V7'/></svg>`,
@@ -64,7 +66,7 @@ async function srRefreshSession(){
   const old=srGetSession();if(!old?.refresh_token)throw new Error('Sesi login tidak ditemukan');
   const d=await srAuthRequest('token?grant_type=refresh_token',{refresh_token:old.refresh_token});
   const s={access_token:d.access_token,refresh_token:d.refresh_token,user:d.user,expires_at:Date.now()+Number(d.expires_in||3600)*1000};
-  srSaveSession(s);srCurrentUser=s.user||null;srUpdateGreeting();return s;
+  srSaveSession(s);srCurrentUser=s.user||null;srUpdateGreeting();go('home');return s;
 }
 async function srActiveSession(){
   let s=srGetSession();if(!s?.access_token)throw new Error('Sesi login tidak ditemukan');
@@ -197,7 +199,7 @@ async function srInitRealtime(){
   try{
     let s=srGetSession();if(!s?.access_token){gate.classList.remove('hidden');return}
     if(!s.expires_at||Date.now()>s.expires_at-60000)s=await srRefreshSession();
-    srCurrentUser=s.user||null;srUpdateGreeting();gate.classList.add('hidden');
+    srCurrentUser=s.user||null;srUpdateGreeting();go('home');gate.classList.add('hidden');
     document.getElementById('srAccountEmail').textContent=srCurrentUser?.email||'';
     srStatus('Mengambil data...','busy','Memuat stok keluarga');
     if(srDirty){srBaseline=srClone(srState());await srFlush()}
@@ -277,6 +279,7 @@ function renderShop(){
   $('#shopList').innerHTML=a.length?a.map(x=>{
     const st=data.items.find(i=>i.id===x.stockId);
     return `<div class="row shop-row compact-shop-row ${x.checked?'checked':''}">
+      <input class="compact-check" type="checkbox" data-checkshop="${x.id}" ${x.checked?'checked':''} aria-label="Sudah dibeli">
       <div class="compact-shop-name" data-shop="${x.id}" title="${esc(x.name)}">${esc(x.name)}</div>
       <div class="compact-qty">
         <button type="button" data-incshop="${x.id}" aria-label="Tambah jumlah">+</button>
@@ -284,13 +287,30 @@ function renderShop(){
         <button type="button" data-decshop="${x.id}" aria-label="Kurangi jumlah">−</button>
       </div>
       <label class="compact-price" title="Harga per ${esc(x.unit)}"><span>Rp</span><input type="number" min="0" step="100" inputmode="numeric" data-priceshop="${x.id}" value="${Number(x.price)||''}" placeholder="0"></label>
-      <button class="compact-cart ${x.checked?'checked':''}" type="button" data-checkshop="${x.id}" aria-label="${x.checked?'Batalkan tanda dibeli':'Tandai sudah dibeli'}">🛒</button>
+      <button class="compact-trash" type="button" data-delshop="${x.id}" aria-label="Hapus dari daftar belanja">🗑️</button>
       <div class="compact-stock">${st?`Stok ${st.qty} ${esc(st.unit)} · Min. ${st.min} ${esc(st.unit)}`:'Belum ada di stok'} · ${esc(x.unit)}</div>
     </div>`;
   }).join(''):'<div class="empty">Daftar belanja kosong.</div>';
 
   $$('[data-shop]').forEach(e=>e.onclick=()=>openShopEdit(Number(e.dataset.shop)));
-  $$('[data-checkshop]').forEach(e=>e.onclick=ev=>{ev.preventDefault();ev.stopPropagation();const x=data.shopping.find(i=>i.id===Number(e.dataset.checkshop));if(x){x.checked=!x.checked;save();renderShop()}});
+  $$('[data-checkshop]').forEach(e=>e.onchange=ev=>{
+    ev.stopPropagation();
+    const x=data.shopping.find(i=>i.id===Number(e.dataset.checkshop));
+    if(x){x.checked=e.checked;save();renderShop()}
+  });
+  $$('[data-delshop]').forEach(e=>e.onclick=ev=>{
+    ev.preventDefault();ev.stopPropagation();
+    const id=Number(e.dataset.delshop);
+    const x=data.shopping.find(i=>i.id===id);
+    if(!x)return;
+    if(!confirm(`Hapus ${x.name} dari daftar belanja?`))return;
+    data.shopping=data.shopping.filter(i=>i.id!==id);
+    if(Array.isArray(data.dismissedShopping)){
+      const key=x.stockId||x.name;
+      if(!data.dismissedShopping.includes(key))data.dismissedShopping.push(key);
+    }
+    save();renderShop();
+  });
   $$('[data-incshop]').forEach(e=>e.onclick=ev=>{ev.preventDefault();ev.stopPropagation();const x=data.shopping.find(i=>i.id===Number(e.dataset.incshop));if(x){x.qty=Number((Number(x.qty||0)+1).toFixed(3));save();renderShop()}});
   $$('[data-decshop]').forEach(e=>e.onclick=ev=>{ev.preventDefault();ev.stopPropagation();const x=data.shopping.find(i=>i.id===Number(e.dataset.decshop));if(x){x.qty=Math.max(0,Number((Number(x.qty||0)-1).toFixed(3)));save();renderShop()}});
   $$('[data-priceshop]').forEach(e=>{
@@ -437,6 +457,8 @@ document.addEventListener('click',e=>{const m=document.getElementById('srAccount
 document.addEventListener('DOMContentLoaded',srInitRealtime);
 
 if('serviceWorker'in navigator)addEventListener('load',async()=>{try{const r=await navigator.serviceWorker.register('./service-worker.js?v=fixed');r.update()}catch(e){console.warn('Service worker:',e)}});
+
+
 
 
 
