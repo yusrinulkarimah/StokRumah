@@ -84,7 +84,7 @@ async function srDb({method='GET',query='',body=null,prefer='return=representati
 function srStatus(text,type='busy',detail=''){
   const pill=document.getElementById('srAccountPill'),dot=document.getElementById('srAccountDot'),status=document.getElementById('srAccountStatus');
   const mdot=document.getElementById('srMenuDot'),mstatus=document.getElementById('srMenuStatus'),mdetail=document.getElementById('srMenuDetail');
-  if(srCurrentUser&&pill)pill.style.display='flex';
+  if(pill&&(srCurrentUser||srGetSession()?.access_token))pill.style.display='flex';
   const color=type==='ok'?'#42b77a':type==='err'?'#df5968':'#e5a23c';
   [dot,mdot].forEach(x=>{if(x)x.style.background=color});
   if(status)status.textContent=text;if(mstatus)mstatus.textContent=text;if(mdetail)mdetail.textContent=detail||(type==='ok'?'Data keluarga sama di semua perangkat':srLastError||'Menghubungkan ke Supabase');
@@ -181,6 +181,7 @@ async function srLogin(){
     const d=await srAuthRequest('token?grant_type=password',{email,password});
     const s={access_token:d.access_token,refresh_token:d.refresh_token,user:d.user,expires_at:Date.now()+Number(d.expires_in||3600)*1000};
     srSaveSession(s);srCurrentUser=s.user||null;
+    const srPillAfterLogin=document.getElementById('srAccountPill');if(srPillAfterLogin)srPillAfterLogin.style.display='flex';
     srUpdateGreeting();
     go('home');
     document.getElementById('authGate').classList.add('hidden');
@@ -202,7 +203,7 @@ async function srInitRealtime(){
   try{
     let s=srGetSession();if(!s?.access_token){gate.classList.remove('hidden');return}
     if(!s.expires_at||Date.now()>s.expires_at-60000)s=await srRefreshSession();
-    srCurrentUser=s.user||null;srUpdateGreeting();go('home');gate.classList.add('hidden');
+    srCurrentUser=s.user||null;const srPillAfterRestore=document.getElementById('srAccountPill');if(srPillAfterRestore)srPillAfterRestore.style.display='flex';srUpdateGreeting();go('home');gate.classList.add('hidden');
     document.getElementById('srAccountEmail').textContent=srCurrentUser?.email||'';
     srStatus('Mengambil data...','busy','Memuat stok keluarga');
     if(srDirty){srBaseline=srClone(srState());await srFlush()}
@@ -460,7 +461,7 @@ document.getElementById('srLogoutBtn').onclick=srLogout;
 document.addEventListener('click',e=>{const m=document.getElementById('srAccountMenu'),p=document.getElementById('srAccountPill');if(m.classList.contains('show')&&!m.contains(e.target)&&!p.contains(e.target))m.classList.remove('show')});
 document.addEventListener('DOMContentLoaded',srInitRealtime);
 
-if('serviceWorker'in navigator)addEventListener('load',async()=>{try{const r=await navigator.serviceWorker.register('./service-worker.js?v=fixed');r.update()}catch(e){console.warn('Service worker:',e)}});
+if('serviceWorker'in navigator)addEventListener('load',async()=>{try{const r=await navigator.serviceWorker.register('./service-worker.js?v=sync-button-fix-20261027');r.update()}catch(e){console.warn('Service worker:',e)}});
 
 
 
